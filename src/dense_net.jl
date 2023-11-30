@@ -1,10 +1,10 @@
 
 
 ########################################################################################################################
-## PTDenseNet
+## BasicDenseNet
 
 """
-    PTDenseNet
+    BasicDenseNet
 
 DOCSTRING
 
@@ -20,7 +20,7 @@ DOCSTRING
 - `functions::Array{Function, 1}`: DESCRIPTION
 - `enabled_function::Function`: DESCRIPTION
 """
-mutable struct PTDenseNet <: AbstractDiscreteDenseBasicNet
+mutable struct BasicDenseNet <: AbstractBasicDenseDiscreteNet
     input::Array{Float64,3}
     output::Array{Float64,3}
     marking::Array{Float64,2}
@@ -34,9 +34,9 @@ mutable struct PTDenseNet <: AbstractDiscreteDenseBasicNet
 end
 
 
-# constructors for PTDenseNet and homogeneous and basic version of it
+# constructors for BasicDenseNet and homogeneous and basic version of it
 """
-    PTDenseNet(in::Array{Float64, 3}, out::Array{Float64, 3}, mark::Array{Float64, 2}, functions::Array{Function, 1})
+    BasicDenseNet(in::Array{Float64, 3}, out::Array{Float64, 3}, mark::Array{Float64, 2}, functions::Array{Function, 1})
 
 DOCSTRING
 
@@ -47,13 +47,13 @@ DOCSTRING
 - `functions`: DESCRIPTION
 - `enabled`: DESCRIPTION
 """
-function PTDenseNet(in::Array{Float64,3}, out::Array{Float64,3}, mark::Array{Float64,2})
+function BasicDenseNet(in::Array{Float64,3}, out::Array{Float64,3}, mark::Array{Float64,2})
 
     ps = size(in)[1]
     ts = size(in)[2]
     rs = size(in)[3]
 
-    net = PTDenseNet(
+    net = BasicDenseNet(
         in,
         out,
         mark,
@@ -120,7 +120,7 @@ end
 
 
 """
-    PTDenseNet(place_size::Int64, transition_size::Int64, resource_size::Int64, code::Vector{AbstractToken})
+    BasicDenseNet(place_size::Int64, transition_size::Int64, resource_size::Int64, code::Vector{AbstractToken})
 
 DOCSTRING
 
@@ -130,7 +130,7 @@ DOCSTRING
 - `resource_size`: DESCRIPTION
 - `code`: DESCRIPTION
 """
-function PTDenseNet(place_size::Int64, transition_size::Int64, resource_size::Int64, code::Vector{S}) where {S<:AbstractToken}
+function BasicDenseNet(place_size::Int64, transition_size::Int64, resource_size::Int64, code::Vector{S}) where {S<:AbstractToken}
 
     # make arrays/tensors
     in::Array{Float64,3} = zeros(Float64, place_size, transition_size, resource_size)
@@ -144,7 +144,7 @@ function PTDenseNet(place_size::Int64, transition_size::Int64, resource_size::In
     build_from_code!(code, in, out, mark)
 
     # build the net
-    net = PTDenseNet(
+    net = BasicDenseNet(
         in,
         out,
         mark,
@@ -177,22 +177,22 @@ end
 ## EnergyBasedNet
 
 """
-    PTDenseNetEnergy
+    EnergyDenseNet
 
 DOCSTRING
 
 # Fields:
-- `basenet::PTDenseNet`: DESCRIPTION
+- `basenet::BasicDenseNet`: DESCRIPTION
 - `energy::EnergyLookup`: DESCRIPTION
 """
-mutable struct PTDenseNetEnergy <: AbstractDiscreteDenseEnergyNet
-    basenet::PTDenseNet
+mutable struct EnergyDenseNet <: AbstractEnergyDenseDiscreteNet
+    basenet::BasicDenseNet
     energy::EnergyLookup
 end
 
 
 """
-    Base.getproperty(net::PTDenseNetEnergy, s::Symbol)
+    Base.getproperty(net::EnergyDenseNet, s::Symbol)
 
 DOCSTRING
 
@@ -200,7 +200,7 @@ DOCSTRING
 - `net`: DESCRIPTION
 - `s`: DESCRIPTION
 """
-function Base.getproperty(net::PTDenseNetEnergy, s::Symbol)
+function Base.getproperty(net::EnergyDenseNet, s::Symbol)
     if s in [:basenet, :energy]
         return getfield(net, s)
     else
@@ -210,7 +210,7 @@ end
 
 
 """
-    PTDenseNetEnergy(in::Array{Float64, 3}, out::Array{Float64, 3}, mark::Array{Float64, 2}, energies::EnergyLookup)
+    EnergyDenseNet(in::Array{Float64, 3}, out::Array{Float64, 3}, mark::Array{Float64, 2}, energies::EnergyLookup)
 
 DOCSTRING
 
@@ -220,13 +220,13 @@ DOCSTRING
 - `mark`: DESCRIPTION
 - `energies`: DESCRIPTION
 """
-function PTDenseNetEnergy(in::Array{Float64,3}, out::Array{Float64,3}, mark::Array{Float64,2}, energies::EnergyLookup)
+function EnergyDenseNet(in::Array{Float64,3}, out::Array{Float64,3}, mark::Array{Float64,2}, energies::EnergyLookup)
 
     ps = size(in)[1]
     ts = size(in)[2]
     rs = size(in)[3]
 
-    net = PTDenseNetEnergy(PTDenseNet(
+    net = EnergyDenseNet(BasicDenseNet(
             in,
             out,
             mark), energies)
@@ -236,7 +236,7 @@ end
 
 
 """
-    PTDenseNetEnergy(place_size::Int64, transition_size::Int64, resource_size::Int64, code::Vector{S}, resources::Vector{Vector{E}})
+    EnergyDenseNet(place_size::Int64, transition_size::Int64, resource_size::Int64, code::Vector{S}, resources::Vector{Vector{E}})
 
 DOCSTRING
 
@@ -247,10 +247,10 @@ DOCSTRING
 - `code`: DESCRIPTION
 - `resources`: DESCRIPTION
 """
-function PTDenseNetEnergy(place_size::Int64, transition_size::Int64, resource_size::Int64, code::Vector{S}, resources::Vector{Vector{E}}) where {S<:AbstractToken,E<:AbstractEnergyToken}
+function EnergyDenseNet(place_size::Int64, transition_size::Int64, resource_size::Int64, code::Vector{S}, resources::Vector{Vector{E}}) where {S<:AbstractToken,E<:AbstractEnergyToken}
 
     # build the net
-    net = PTDenseNetEnergy(PTDenseNet(
+    net = EnergyDenseNet(BasicDenseNet(
             place_size, transition_size, resource_size, code
         ),
         EnergyLookup(resources)

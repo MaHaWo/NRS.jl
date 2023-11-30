@@ -17,74 +17,38 @@ abstract type AbstractEnergyRuleToken <: AbstractRuleToken end
 
 abstract type AbstractNet end
 
-abstract type AbstractEnergyNet <: AbstractNet end 
+abstract type AbstractDiscreteNet <: AbstractNet end 
 
-abstract type AbstractDenseEnergyNet <: AbstractEnergyNet end 
+abstract type AbstractContinuousNet <: AbstractNet end 
 
-abstract type AbstractSparseEnergyNet <: AbstractEnergyNet end 
+abstract type  AbstractDenseDiscreteNet <: AbstractDiscreteNet end 
 
-abstract type AbstractDiscreteDenseEnergyNet <: AbstractDenseEnergyNet end
+abstract type  AbstractSparseDiscreteNet <: AbstractDiscreteNet  end 
 
-abstract type AbstractDiscreteSparseEnergyNet <: AbstractSparseEnergyNet end
 
-abstract type AbstractBasicNet <: AbstractNet end 
+abstract type  AbstractBasicDenseDiscreteNet <: AbstractDenseDiscreteNet  end 
 
-abstract type AbstractDenseBasicNet <: AbstractBasicNet end 
+abstract type  AbstractBasicSparseDiscreteNet <: AbstractSparseDiscreteNet  end 
 
-abstract type AbstractSparseBasicNet <: AbstractBasicNet end 
 
-abstract type AbstractDiscreteDenseBasicNet <: AbstractDenseBasicNet end
+abstract type  AbstractEnergyDenseDiscreteNet <: AbstractDenseDiscreteNet  end 
 
-abstract type AbstractDiscreteSparseBasicNet <: AbstractSparseBasicNet end
+abstract type  AbstractEnergySparseDiscreteNet <: AbstractSparseDiscreteNet  end 
 
 
 ########################################################################################################################
 ## Abstract rewriting rule types
 abstract type AbstractRule end
 
-abstract type AbstractBasicRule <: AbstractRule end 
+abstract type AbstractSparseRule <: AbstractRule end 
 
-abstract type AbstractDenseBasicRule <: AbstractBasicRule end 
-
-abstract type AbstractSparseBasicRule <: AbstractBasicRule end 
-
-abstract type AbstractDiscreteDenseBasicRule <: AbstractDenseBasicRule end 
-
-abstract type AbstractDiscreteSparseBasicRule <: AbstractSparseBasicRule end
-
-
-abstract type AbstractEnergyRule <: AbstractRule end
-
-abstract type AbstractDenseEnergyRule <: AbstractEnergyRule end 
-
-abstract type AbstractSparseEnergyRule <: AbstractEnergyRule end 
-
-abstract type AbstractDiscreteDenseEnergyRule <: AbstractDenseEnergyRule end 
-
-abstract type AbstractDiscreteSparseEnergyRule <: AbstractSparseEnergyRule end
+abstract type AbstractDenseRule <: AbstractRule end 
 
 
 ########################################################################################################################
 ## Abstract rewriting system types
 abstract type AbstractNetRewritingSystem end 
 
-abstract type AbstractBasicNetRewritingSystem <: AbstractNetRewritingSystem end
+abstract type AbstractDenseNetRewritingSystem <: AbstractNetRewritingSystem end 
 
-abstract type AbstractSparseBasicNetRewritingSystem <: AbstractBasicNetRewritingSystem end 
-
-abstract type AbstractDenseBasicNetRewritingSystem <: AbstractBasicNetRewritingSystem end 
-
-abstract type AbstractDiscreteSparseBasicNetRewritingSystem<: AbstractSparseBasicNetRewritingSystem end 
-
-abstract type AbstractDiscreteDenseBasicNetRewritingSystem <: AbstractDenseBasicNetRewritingSystem end
-
-
-abstract type AbstractEnergyNetRewritingSystem <: AbstractNetRewritingSystem end
-
-abstract type AbstractSparseEnergyNetRewritingSystem <: AbstractEnergyNetRewritingSystem end 
-
-abstract type AbstractDenseEnergyNetRewritingSystem <: AbstractEnergyNetRewritingSystem end 
-
-abstract type AbstractDiscreteSparseEnergyNetRewritingSystem<: AbstractSparseBEnergyetRewritingSystem end 
-
-abstract type AbstractDiscreteDenseEnergyNetRewritingSystem <: AbstractDenseEnergyNetRewritingSystem end
+abstract type AbstractSparseNetRewritingSystem <: AbstractNetRewritingSystem end 

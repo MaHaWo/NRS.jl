@@ -1,19 +1,15 @@
-using TensorOperations
-using Test
 
-include("../src/ipn.jl")
-include("./testhelpers.jl")
 
 ########################################################################################################################
-## construction of PTNet and derivatives
+## construction of BasicDenseNet
 
 @testset "basic_net_construction" begin
     fixture = make_discrete_system_test_data()
 
     codefixture = make_discrete_encoding_test_data()
 
-    net = IPN.PTNet(7, 5, 4, codefixture.code)
-    IPN.compute_enabled!(net)
+    net = NRS.BasicDenseNet(7, 5, 4, codefixture.code)
+    NRS.compute_enabled!(net)
 
     @test all(net.input .≈ fixture.in)
     @test all(net.output .≈ fixture.out)
@@ -23,19 +19,19 @@ include("./testhelpers.jl")
 end
 
 
-#####################################################################################################################
+# #####################################################################################################################
 # auxilliary functions
 
 @testset "interface_normal" begin
     fixture = make_discrete_encoding_test_data()
 
-    IPN.compute_input_interface_places!(fixture.net)
+    NRS.compute_input_interface_places!(fixture.net)
 
-    IPN.compute_input_interface_transitions!(fixture.net)
+    NRS.compute_input_interface_transitions!(fixture.net)
 
-    IPN.compute_output_interface_places!(fixture.net)
+    NRS.compute_output_interface_places!(fixture.net)
 
-    IPN.compute_input_interface_transitions!(fixture.altnet)
+    NRS.compute_input_interface_transitions!(fixture.altnet)
 
     @test fixture.net.input_interface_places == Bool[false, false, false, true, false, false, false]
 
@@ -50,7 +46,7 @@ end
 @testset "noninhibitor_arcs" begin
     fixture = make_discrete_encoding_test_data()
 
-    IPN.compute_non_inhibitor_arcs!(fixture.net)
+    NRS.compute_non_inhibitor_arcs!(fixture.net)
 
     noninhibitors = ones(Bool, 7, 5)
 
@@ -62,10 +58,10 @@ end
 @testset "interface_alt" begin
     fixture = make_discrete_encoding_test_data()
 
-    IPN.compute_input_interface_places!(fixture.altnet)
-    IPN.compute_input_interface_transitions!(fixture.altnet)
-    IPN.compute_input_interface_places!(fixture.altnet)
-    IPN.compute_output_interface_transitions!(fixture.altnet)
+    NRS.compute_input_interface_places!(fixture.altnet)
+    NRS.compute_input_interface_transitions!(fixture.altnet)
+    NRS.compute_input_interface_places!(fixture.altnet)
+    NRS.compute_output_interface_transitions!(fixture.altnet)
 
     @test fixture.altnet.input_interface_places == Bool[false, false, false, true, false, false, false]
 
@@ -79,7 +75,7 @@ end
 
 @testset "noninhibitor_arcs_alt" begin
     fixture = make_discrete_encoding_test_data()
-    IPN.compute_non_inhibitor_arcs!(fixture.altnet)
+    NRS.compute_non_inhibitor_arcs!(fixture.altnet)
 
     noninhibitors = ones(Bool, 7, 5)
     noninhibitors[4, 5] = false
@@ -90,21 +86,20 @@ end
 @testset "enabled_discrete" begin
     fixture = make_discrete_encoding_test_data()
 
-    IPN.compute_enabled!(fixture.net)
+    NRS.compute_enabled!(fixture.net)
 
     @test fixture.net.enabled == Bool[true, false, false, false, false]
 
 end
-
 
 ########################################################################################################################
 ## conflict handling 
 
 @testset "conflict_handling" begin
     fixture = make_conflict_data()
-    IPN.compute_enabled!(fixture.net)
-    found_bv::BitVector = IPN.detect_conflict_vector(fixture.net)
-    found::Bool = IPN.detect_conflict(fixture.net)
+    NRS.compute_enabled!(fixture.net)
+    found_bv::BitVector = NRS.detect_conflict_vector(fixture.net)
+    found::Bool = NRS.detect_conflict(fixture.net)
 
     @test fixture.net.marking ≈ fixture.marking
     @test fixture.net.enabled == [true, true]
@@ -112,8 +107,8 @@ end
     @test found
 
     # handle conflict
-    IPN.handle_conflict!(fixture.net)
-    found_after = IPN.detect_conflict(fixture.net)
+    NRS.handle_conflict!(fixture.net)
+    found_after = NRS.detect_conflict(fixture.net)
     @test found_after == false
     @test fixture.net.enabled == [true, false] || fixture.net.enabled == [false, true]
 
@@ -126,9 +121,9 @@ end
 
     @test fixture.net.marking ≈ fixture.marking
 
-    IPN.compute_non_inhibitor_arcs!(fixture.net)
+    NRS.compute_non_inhibitor_arcs!(fixture.net)
 
-    IPN.compute_step!(fixture.net)
+    NRS.compute_step!(fixture.net)
 
     tmp_marking = zeros(Float64, 7, 4)
 
@@ -146,13 +141,13 @@ end
 
     @test fixture.net.marking ≈ fixture.marking
 
-    IPN.compute_non_inhibitor_arcs!(fixture.net)
+    NRS.compute_non_inhibitor_arcs!(fixture.net)
 
     tmp_marking = zeros(Float64, 7, 4)
     tmp_marking[3, :] = [5.0, 0.0, 0.0, 0.0]
     tmp_marking[7, :] = [0.0, 0.0, 5.0, 0.0]
 
-    IPN.run!(fixture.net, 10, 2e-15)
+    NRS.run!(fixture.net, 10, 2e-15)
 
     @test fixture.net.tmp_marking ≈ zeros(Float64, 7, 4)
     @test fixture.net.marking ≈ tmp_marking
@@ -164,13 +159,13 @@ end
 @testset "energy_lookup_test" begin
     fixture = make_energy_discrete_system_test_data()
 
-    e = IPN.EnergyLookup(fixture.resources)
+    e = NRS.EnergyLookup(fixture.resources)
 
     @test all(e.lookup_table .≈ fixture.energylookup)
 
-    net = IPN.PTNetEnergy(
-        IPN.PTNet(5, 3, 3, fixture.code),
-        IPN.EnergyLookup(fixture.resources)
+    net = NRS.EnergyDenseNet(
+        NRS.BasicDenseNet(5, 3, 3, fixture.code),
+        NRS.EnergyLookup(fixture.resources)
     )
 
     @test all(net.energy.lookup_table .≈ fixture.energylookup)
@@ -188,15 +183,15 @@ end
 @testset "energy_based_compute_enabled" begin 
     fixture = make_energy_discrete_system_test_data()
 
-    net = IPN.PTNetEnergy(
-        IPN.PTNet(5, 3, 3, fixture.code),
-        IPN.EnergyLookup(fixture.resources)
+    net = NRS.EnergyDenseNet(
+        NRS.BasicDenseNet(5, 3, 3, fixture.code),
+        NRS.EnergyLookup(fixture.resources)
     )
 
     net.marking[2, :] = [3., 1., 2.]
 
 
-    IPN.compute_enabled!(net)
+    NRS.compute_enabled!(net)
 
     @test all(net.enabled .≈ [true, false, false])
 
@@ -204,7 +199,7 @@ end
     net.marking[2, :] = zeros(Float64, 3)
     net.marking[3, :] = [2., 2., 2.]
 
-    IPN.compute_enabled!(net)
+    NRS.compute_enabled!(net)
     @test all(net.enabled .≈ [false, true, true])
 end
 
@@ -212,15 +207,15 @@ end
 @testset "energy_net_run" begin 
     fixture = make_energy_discrete_system_test_data()
 
-    net = IPN.PTNetEnergy(
-        IPN.PTNet(5, 3, 3, fixture.code),
-        IPN.EnergyLookup(fixture.resources)
+    net = NRS.EnergyDenseNet(
+        NRS.BasicDenseNet(5, 3, 3, fixture.code),
+        NRS.EnergyLookup(fixture.resources)
     )
 
     net.marking[2, :] = [3., 2., 2.]
     net.marking[1, :] = [1., 1., 1.]
 
-    IPN.run!(net, 10, 5e-12,)
+    NRS.run!(net, 10, 5e-12,)
 
     m1::Array{Float64, 2} = zeros(Float64, 5, 3)
     m2::Array{Float64, 2} = zeros(Float64, 5, 3) 

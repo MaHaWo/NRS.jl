@@ -1,17 +1,17 @@
-using TensorOperations
+
 
 ########################################################################################################################
 ## conflict handling 
 
 """
-detect_conflict_vector(net::N)::BitVector where N <: AbstractDiscreteDenseBasicNet
+detect_conflict_vector(net::N)::BitVector where N <: AbstractDenseDiscreteNet
 
 DOCSTRING
 
 # Arguments:
 - `net`: DESCRIPTION
 """
-function detect_conflict_vector(net::N) where {N<:AbstractDiscreteDenseBasicNet}
+function detect_conflict_vector(net::N) where {N<:AbstractDenseDiscreteNet}
 
     conflict::BitVector = fill(false, size(net.marking)[1])
 
@@ -27,14 +27,14 @@ end
 
 
 """
-    detect_conflict(net::N)::Bool where N <: AbstractDiscreteDenseBasicNet
+    detect_conflict(net::N)::Bool where N <: AbstractDenseDiscreteNet
 
 DOCSTRING
 
 # Arguments:
 - `net`: DESCRIPTION
 """
-function detect_conflict(net::N) where {N<:AbstractDiscreteDenseBasicNet}
+function detect_conflict(net::N) where {N<:AbstractDenseDiscreteNet}
 
     conflict::Bool = false
 
@@ -50,17 +50,15 @@ function detect_conflict(net::N) where {N<:AbstractDiscreteDenseBasicNet}
 end
 
 
-
-
 """
-    handle_conflict!(net::AbstractDiscreteDenseNet)
+    handle_conflict!(net::N) where {N <: AbstractDenseDiscreteNet}
 
 DOCSTRING
 
 # Arguments:
 - `net`: DESCRIPTION
 """
-function handle_conflict!(net::N) where {N<:AbstractDiscreteDenseBasicNet}
+function handle_conflict!(net::N) where {N<:AbstractDenseDiscreteNet}
 
     # randomly disable transitions until no more conflicts are detected
     @inline @inbounds while detect_conflict(net) && sum(net.enabled) > 0
@@ -99,7 +97,7 @@ DOCSTRING
 # Arguments:
 - `net`: DESCRIPTION
 """
-function compute_enabled!(net::N) where {N<:AbstractDiscreteDenseBasicNet}
+function compute_enabled!(net::N) where {N<:AbstractBasicDenseDiscreteNet}
 
     #FIXME: there a faster way to compute this?
     @inline @inbounds for t in 1:size(net.input)[2]
@@ -144,7 +142,7 @@ DOCSTRING
 # Arguments:
 - `net`: DESCRIPTION
 """
-function compute_enabled!(net::N) where {N<:AbstractDiscreteDenseBasicNet}
+function compute_enabled!(net::N) where {N<:AbstractEnergyDenseDiscreteNet}
 
     @inline @inbounds for t in 1:size(net.input)[2]
 
@@ -193,7 +191,7 @@ DOCSTRING
 # Arguments:
 - `net`: DESCRIPTION
 """
-function compute_step!(net::N) where {N<:AbstractDiscreteDenseNet}
+function compute_step!(net::N) where {N<:AbstractDenseDiscreteNet}
 
     compute_enabled!(net)
 
@@ -232,7 +230,7 @@ DOCSTRING
 - `maxiter`: DESCRIPTION
 - `tol`: DESCRIPTION
 """
-function run!(net::N, maxiter::Int64, tol::Float64) where {N<:AbstractDiscreteDenseNet}
+function run!(net::N, maxiter::Int64, tol::Float64) where {N<:AbstractDenseDiscreteNet}
 
     # println("running net")
     iter = 1

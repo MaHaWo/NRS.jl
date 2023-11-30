@@ -1,28 +1,25 @@
-include("../src/ipn.jl")
-
-using Test
 
 @testset "encoding_Token_test" begin 
 
-    s = IPN.Token(
-        IPN.P,
+    s = NRS.Token(
+        NRS.P,
         1,
         2, 
         rand(Float64, 5), 
         rand(Float64, 5), 
         6, 
         [
-            IPN.BasicToken(IPN.P, 1, 3, rand(Float64, 5), rand(Float64, 5)), 
-            IPN.BasicToken(IPN.T, 2, 3, rand(Float64, 5), rand(Float64, 5)), 
-            IPN.BasicToken(IPN.I, 2, 2, rand(Float64, 5), rand(Float64, 5)), 
+            NRS.BasicToken(NRS.P, 1, 3, rand(Float64, 5), rand(Float64, 5)), 
+            NRS.BasicToken(NRS.T, 2, 3, rand(Float64, 5), rand(Float64, 5)), 
+            NRS.BasicToken(NRS.I, 2, 2, rand(Float64, 5), rand(Float64, 5)), 
         ], 
         rand(Float64, 5)
 
     )
 
-    b = IPN.to_basic(s)
+    b = NRS.to_basic(s)
 
-    @test b.k == IPN.P
+    @test b.k == NRS.P
     @test b.p == 1 
     @test b.t == 2 
     @test all(isapprox.(b.w, s.w))
@@ -31,24 +28,24 @@ end
 
 @testset "encoding_energy_Token_test" begin 
 
-    s = IPN.EnergyToken(
-        IPN.P,
+    s = NRS.EnergyToken(
+        NRS.P,
         1,
         2, 
         rand(Float64, 5), 
         rand(Float64, 5), 
         6, 
         [
-            IPN.BasicToken(IPN.P, 1, 3, rand(Float64, 5), rand(Float64, 5)), 
-            IPN.BasicToken(IPN.T, 2, 3, rand(Float64, 5), rand(Float64, 5)), 
-            IPN.BasicToken(IPN.I, 2, 2, rand(Float64, 5), rand(Float64, 5)), 
+            NRS.BasicToken(NRS.P, 1, 3, rand(Float64, 5), rand(Float64, 5)), 
+            NRS.BasicToken(NRS.T, 2, 3, rand(Float64, 5), rand(Float64, 5)), 
+            NRS.BasicToken(NRS.I, 2, 2, rand(Float64, 5), rand(Float64, 5)), 
         ], 
         rand(Float64, 5), 
         3.14
     )
 
-    b = IPN.to_basic(s)
-    @test b.k == IPN.P
+    b = NRS.to_basic(s)
+    @test b.k == NRS.P
     @test b.p == 1 
     @test b.t == 2 
     @test all(isapprox.(b.w, s.w))

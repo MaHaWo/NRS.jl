@@ -1,17 +1,12 @@
 
-using Test
-using SparseArrayKit
-include("../src/ipn.jl")
-include("./testhelpers.jl")
-
 @testset "basic_net_construction_sparse" begin 
     fixture = make_discrete_system_test_data()
 
     codefixture = make_discrete_encoding_test_data_sparse()
 
-    net = IPN.PTSparseNet(7, 5, 4, codefixture.code)
+    net = NRS.SparseBasicNet(7, 5, 4, codefixture.code)
 
-    IPN.compute_enabled!(net)
+    NRS.compute_enabled!(net)
 
     @test net.input_interface_places isa SparseArray
 
@@ -36,15 +31,15 @@ end
 @testset  "interface_normal_sparse" begin 
     fixture = make_discrete_encoding_test_data_sparse()
     
-    IPN.compute_input_interface_places!(fixture.net)
+    NRS.compute_input_interface_places!(fixture.net)
 
-    IPN.compute_input_interface_transitions!(fixture.net)
+    NRS.compute_input_interface_transitions!(fixture.net)
 
-    IPN.compute_output_interface_places!(fixture.net)
+    NRS.compute_output_interface_places!(fixture.net)
 
-    IPN.compute_input_interface_transitions!(fixture.altnet)
+    NRS.compute_input_interface_transitions!(fixture.altnet)
 
-    @test fixture.net isa IPN.PTSparseNet
+    @test fixture.net isa NRS.SparseBasicNet
 
     @test fixture.net.input isa SparseArray
 
@@ -65,7 +60,7 @@ end
 @testset "noninhibitor_arcs_sparse" begin 
     fixture = make_discrete_encoding_test_data_sparse()
 
-    IPN.compute_non_inhibitor_arcs!(fixture.net)
+    NRS.compute_non_inhibitor_arcs!(fixture.net)
 
     noninhibitors = ones(Bool, 7, 5)
 
@@ -78,10 +73,10 @@ end
 @testset "interface_alt_sparse" begin 
     fixture = make_discrete_encoding_test_data_sparse()
 
-    IPN.compute_input_interface_places!(fixture.altnet)
-    IPN.compute_input_interface_transitions!(fixture.altnet)
-    IPN.compute_input_interface_places!(fixture.altnet)
-    IPN.compute_output_interface_transitions!(fixture.altnet)
+    NRS.compute_input_interface_places!(fixture.altnet)
+    NRS.compute_input_interface_transitions!(fixture.altnet)
+    NRS.compute_input_interface_places!(fixture.altnet)
+    NRS.compute_output_interface_transitions!(fixture.altnet)
 
     @test fixture.altnet.input_interface_places == Bool[false, false, false, true, false, false, false]
 
@@ -95,7 +90,7 @@ end
 
 @testset "noninhibitor_arcs_alt_sparse" begin 
     fixture = make_discrete_encoding_test_data_sparse()
-    IPN.compute_non_inhibitor_arcs!(fixture.altnet)
+    NRS.compute_non_inhibitor_arcs!(fixture.altnet)
 
     noninhibitors = ones(Bool, 7, 5)
     noninhibitors[4, 5] = false
@@ -106,7 +101,7 @@ end
 @testset "enabled_discrete_sparse" begin 
     fixture = make_discrete_encoding_test_data_sparse()
 
-    IPN.compute_enabled!(fixture.net)
+    NRS.compute_enabled!(fixture.net)
 
     @test fixture.net.enabled == Bool[true, false, false, false, false]
 end
@@ -114,10 +109,10 @@ end
 
 @testset "conflict_handling_sparse" begin 
     fixture = make_conflict_data_sparse()
-    IPN.compute_enabled!(fixture.net)
+    NRS.compute_enabled!(fixture.net)
     
-    found_bv::BitVector = IPN.detect_conflict_vector(fixture.net)
-    found::Bool = IPN.detect_conflict(fixture.net)
+    found_bv::BitVector = NRS.detect_conflict_vector(fixture.net)
+    found::Bool = NRS.detect_conflict(fixture.net)
 
     @test fixture.net.marking ≈ fixture.marking
     @test fixture.net.enabled == [true, true]
@@ -125,8 +120,8 @@ end
     @test found
 
     # # handle conflict
-    IPN.handle_conflict!(fixture.net)
-    found_after = IPN.detect_conflict(fixture.net)
+    NRS.handle_conflict!(fixture.net)
+    found_after = NRS.detect_conflict(fixture.net)
     @test found_after == false
     @test fixture.net.enabled == [true, false] || fixture.net.enabled == [false, true]
 
@@ -139,8 +134,8 @@ end
 
     @test fixture.net.marking ≈ fixture.marking
     
-    IPN.compute_non_inhibitor_arcs!(fixture.net)
-    IPN.compute_step!(fixture.net)
+    NRS.compute_non_inhibitor_arcs!(fixture.net)
+    NRS.compute_step!(fixture.net)
 
     tmp_marking = SparseArray(zeros(Float64, 7, 4))
     tmp_marking[1, :] = [4.0, 0.0, 0.0, 0.0]
@@ -157,13 +152,13 @@ end
 
     @test fixture.net.marking ≈ fixture.marking
 
-    IPN.compute_non_inhibitor_arcs!(fixture.net)
+    NRS.compute_non_inhibitor_arcs!(fixture.net)
 
     tmp_marking = SparseArray(zeros(Float64, 7, 4))
     tmp_marking[3, :] = [5.0, 0.0, 0.0, 0.0]
     tmp_marking[7, :] = [0.0, 0.0, 5.0, 0.0]
 
-    IPN.run!(fixture.net, 10, 2e-15)
+    NRS.run!(fixture.net, 10, 2e-15)
 
     @show fixture.net.marking
     @test fixture.net.tmp_marking ≈ SparseArray(zeros(Float64, 7, 4))
@@ -175,14 +170,14 @@ end
 @testset "energy_lookup_test_sparse" begin 
     fixture = make_energy_discrete_system_test_data()
 
-    net = IPN.PTSparseEnergyNet(
-        IPN.PTSparseNet(5, 3, 3, fixture.code),
-        IPN.EnergyLookup(fixture.resources)
+    net = NRS.EnergySparseNet(
+        NRS.SparseBasicNet(5, 3, 3, fixture.code),
+        NRS.EnergyLookup(fixture.resources)
     )
 
     net.marking[2, :] = [3., 1., 2.]
 
-    IPN.compute_enabled!(net)
+    NRS.compute_enabled!(net)
 
     @test all(net.enabled .≈ [true, false, false])
 
@@ -190,21 +185,21 @@ end
     net.marking[2, :] = zeros(Float64, 3)
     net.marking[3, :] = [2., 2., 2.]
 
-    IPN.compute_enabled!(net)
+    NRS.compute_enabled!(net)
     @test all(net.enabled .≈ [false, true, true])
 end
 
 @testset "energy_based_compute_enabled_sparse" begin  
     fixture = make_energy_discrete_system_test_data()
 
-    net = IPN.PTSparseEnergyNet(
-        IPN.PTSparseNet(5, 3, 3, fixture.code),
-        IPN.EnergyLookup(fixture.resources)
+    net = NRS.EnergySparseNet(
+        NRS.SparseBasicNet(5, 3, 3, fixture.code),
+        NRS.EnergyLookup(fixture.resources)
     )
 
     net.marking[2, :] = [3., 1., 2.]
 
-    IPN.compute_enabled!(net)
+    NRS.compute_enabled!(net)
 
     @test all(net.enabled .≈ [true, false, false])
 
@@ -212,7 +207,7 @@ end
     net.marking[2, :] = zeros(Float64, 3)
     net.marking[3, :] = [2., 2., 2.]
 
-    IPN.compute_enabled!(net)
+    NRS.compute_enabled!(net)
     @test all(net.enabled .≈ [false, true, true])
 end
 
@@ -220,14 +215,14 @@ end
 
     fixture = make_energy_discrete_system_test_data()
 
-    net = IPN.PTSparseEnergyNet(
-        IPN.PTSparseNet(5, 3, 3, fixture.code),
-        IPN.EnergyLookup(fixture.resources)
+    net = NRS.EnergySparseNet(
+        NRS.SparseBasicNet(5, 3, 3, fixture.code),
+        NRS.EnergyLookup(fixture.resources)
     )
     net.marking[2, :] = [3., 2., 2.]
     net.marking[1, :] = [1., 1., 1.]
 
-    IPN.run!(net, 10, 5e-12,)
+    NRS.run!(net, 10, 5e-12,)
 
     m1::SparseArray{Float64, 2} = SparseArray{Float32, 2}(zeros(Float64, 5, 3))
     m2::SparseArray{Float64, 2} = SparseArray{Float32, 2}(zeros(Float64, 5, 3))

@@ -1,9 +1,3 @@
-
-# using AutomaticDocstrings # not necessary for the running of the module
-# AutomaticDocstrings.options[:min_args] = 1
-# AutomaticDocstrings.options[:kwargs_header] = "# Keyword arguments:"
-
-
 """
     EnergyLookup
 

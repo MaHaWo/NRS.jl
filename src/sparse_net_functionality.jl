@@ -1,9 +1,3 @@
-using TensorOperations
-using SparseArrayKit
-
-
-
-
 ################################################################################
 ## conflict handling
 
@@ -15,9 +9,8 @@ DOCSTRING
 # Arguments:
 - `net`: DESCRIPTION
 """
-function detect_conflict_vector(net::N)::BitVector where {N<:AbstractDiscreteSparseNet}
+function detect_conflict_vector(net::N)::BitVector where {N<:AbstractSparseDiscreteNet}
 
-    println("detect_conflict_vector sparse")
     conflict::BitVector = fill(false, size(net.marking)[1])
 
     @inline @inbounds for p in 1:size(net.marking)[1]
@@ -40,7 +33,7 @@ DOCSTRING
 # Arguments:
 - `net`: DESCRIPTION
 """
-function detect_conflict(net::N)::Bool where {N<:AbstractDiscreteSparseNet}
+function detect_conflict(net::N)::Bool where {N<:AbstractSparseDiscreteNet}
 
     conflict::Bool = false
 
@@ -65,7 +58,7 @@ DOCSTRING
 # Arguments:
 - `net`: DESCRIPTION
 """
-function handle_conflict!(net::N) where {N<:AbstractDiscreteSparseNet}
+function handle_conflict!(net::N) where {N<:AbstractSparseDiscreteNet}
     # randomly disable transitions until no more conflicts are detected
     @inline @inbounds while detect_conflict(net) && sum(net.enabled) > 0
 
@@ -98,14 +91,14 @@ end
 
 
 """
-    compute_enabled!(net::N)  where {N <: AbstractDiscreteSparseNet}
+    compute_enabled!(net::N)  where {N <: AbstractBasicSparseDiscreteNet}
 
 DOCSTRING
 
 # Arguments:
 - `net`: DESCRIPTION
 """
-function compute_enabled!(net::N) where {N<:AbstractDiscreteSparseNet}
+function compute_enabled!(net::N) where {N<:AbstractBasicSparseDiscreteNet}
 
     SparseArrayKit.zerovector!(net.enabled)
 
@@ -140,14 +133,14 @@ end
 
 
 """
-    compute_enabled!(net::N) where{N <: AbstractDiscreteEnergySparseNet}
+    compute_enabled!(net::N) where{N <: AbstractEnergySparseDiscreteNet}
 
 DOCSTRING
 
 # Arguments:
 - `net`: DESCRIPTION
 """
-function compute_enabled!(net::N) where {N<:AbstractDiscreteEnergySparseNet}
+function compute_enabled!(net::N) where {N<:AbstractEnergySparseDiscreteNet}
 
     SparseArrayKit.zerovector!(net.enabled)
 
@@ -195,7 +188,7 @@ DOCSTRING
 # Arguments:
 - `net`: DESCRIPTION
 """
-function compute_step!(net::N) where {N<:AbstractDiscreteSparseNet}
+function compute_step!(net::N) where {N<:AbstractSparseDiscreteNet}
 
     compute_enabled!(net)
 
@@ -236,11 +229,11 @@ DOCSTRING
 - `maxiter`: DESCRIPTION
 - `tol`: DESCRIPTION
 """
-function run!(net::N, maxiter::Int64, tol::Float64) where {N<:AbstractSparseNet}
+function run!(net::N, maxiter::Int64, tol::Float64) where {N<:AbstractSparseDiscreteNet}
 
     iter = 1
 
-    old_marking = SparseArray{zeros(Float64, size(net.marking)...)}
+    old_marking = SparseArray(zeros(Float64, size(net.marking)...))
 
     if hasfield(typeof(net), :tmp_marking)
 

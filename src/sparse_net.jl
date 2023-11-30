@@ -1,15 +1,8 @@
-using SparseArrayKit
-using TensorOperations
-
-using AutomaticDocstrings # not necessary for the running of the module
-AutomaticDocstrings.options[:min_args] = 1
-AutomaticDocstrings.options[:kwargs_header] = "# Keyword arguments:"
-
 ################################################################################
 ## PTNet
 
 """
-    PTSparseNet
+    SparseBasicNet
 
 DOCSTRING
 
@@ -25,7 +18,7 @@ DOCSTRING
 - `output_interface_transitions::SparseArray{Bool, 1}`: DESCRIPTION
 - `noninhibitor_arcs::SparseArray{Bool, 2}`: DESCRIPTION
 """
-mutable struct PTSparseNet <: AbstractDiscreteSparseNet
+mutable struct SparseBasicNet <: AbstractBasicSparseDiscreteNet
     input::SparseArray{Float64,3}
     output::SparseArray{Float64,3}
     marking::SparseArray{Float64,2}
@@ -40,7 +33,7 @@ end
 
 
 """
-    PTSparseNet(in::SparseArray{Float64, 3}, out::SparseArray{Float64, 3}, mark::SparseArray{Float64, 2})
+    SparseBasicNet(in::SparseArray{Float64, 3}, out::SparseArray{Float64, 3}, mark::SparseArray{Float64, 2})
 
 DOCSTRING
 
@@ -49,7 +42,7 @@ DOCSTRING
 - `out`: DESCRIPTION
 - `mark`: DESCRIPTION
 """
-function PTSparseNet(in::SparseArray{Float64,3}, out::SparseArray{Float64,3}, mark::SparseArray{Float64,2})
+function SparseBasicNet(in::SparseArray{Float64,3}, out::SparseArray{Float64,3}, mark::SparseArray{Float64,2})
 
     ps = size(in)[1]
     ts = size(in)[2]
@@ -121,7 +114,7 @@ end
 
 
 """
-    PTSparseNet(place_size::Int64, transition_size::Int64, resource_size::Int64, code::Vector{S})
+    SparseBasicNet(place_size::Int64, transition_size::Int64, resource_size::Int64, code::Vector{S})
 
 DOCSTRING
 
@@ -131,7 +124,7 @@ DOCSTRING
 - `resource_size`: DESCRIPTION
 - `code`: DESCRIPTION
 """
-function PTSparseNet(place_size::Int64, transition_size::Int64, resource_size::Int64, code::Vector{S}) where {S<:AbstractToken}
+function SparseBasicNet(place_size::Int64, transition_size::Int64, resource_size::Int64, code::Vector{S}) where {S<:AbstractToken}
 
     # make arrays/tensors
     in = SparseArrayKit.SparseArray(zeros(Float64, place_size, transition_size, resource_size))
@@ -145,7 +138,7 @@ function PTSparseNet(place_size::Int64, transition_size::Int64, resource_size::I
     build_from_code!(code, in, out, mark)
 
     # build the net
-    net = PTSparseNet(
+    net = SparseBasicNet(
         in,
         out,
         mark,
@@ -177,22 +170,22 @@ end
 ## EnergyBasedNet
 
 """
-    PTSparseEnergyNet
+    EnergySparseNet
 
 DOCSTRING
 
 # Fields:
-- `basenet::PTSparseNet`: DESCRIPTION
+- `basenet::SparseBasicNet`: DESCRIPTION
 - `energy::EnergyLookup`: DESCRIPTION
 """
-mutable struct PTSparseEnergyNet <: AbstractDiscreteEnergySparseNet
-    basenet::PTSparseNet
+mutable struct EnergySparseNet <: AbstractEnergySparseDiscreteNet
+    basenet::SparseBasicNet
     energy::EnergyLookup
 end
 
 
 """
-    Base.getproperty(net::PTSparseEnergyNet, s::Symbol)
+    Base.getproperty(net::EnergySparseNet, s::Symbol)
 
 DOCSTRING
 
@@ -200,7 +193,7 @@ DOCSTRING
 - `net`: DESCRIPTION
 - `s`: DESCRIPTION
 """
-function Base.getproperty(net::PTSparseEnergyNet, s::Symbol)
+function Base.getproperty(net::EnergySparseNet, s::Symbol)
     if s in [:basenet, :energy]
         return getfield(net, s)
     else
@@ -210,7 +203,7 @@ end
 
 
 """
-PTSparseEnergyNet(in::Array{Float64, 3}, out::Array{Float64, 3}, mark::Array{Float64, 2}, energies::EnergyLookup)
+EnergySparseNet(in::Array{Float64, 3}, out::Array{Float64, 3}, mark::Array{Float64, 2}, energies::EnergyLookup)
 
 DOCSTRING
 
@@ -220,8 +213,8 @@ DOCSTRING
 - `mark`: DESCRIPTION
 - `energies`: DESCRIPTION
 """
-function PTSparseEnergyNet(in::Array{Float64,3}, out::Array{Float64,3}, mark::Array{Float64,2}, energies::EnergyLookup)
-    return PTSparseEnergyNet(
+function EnergySparseNet(in::Array{Float64,3}, out::Array{Float64,3}, mark::Array{Float64,2}, energies::EnergyLookup)
+    return EnergySparseNet(
         PTNet(in, out, mark),
         energies
     )
@@ -229,7 +222,7 @@ end
 
 
 """
-    PTSparseEnergyNet(place_size::Int64, transition_size::Int64, resource_size::Int64, code::Vector{S}, resources::Vector{Vector{E}})
+    EnergySparseNet(place_size::Int64, transition_size::Int64, resource_size::Int64, code::Vector{S}, resources::Vector{Vector{E}})
 
 DOCSTRING
 
@@ -240,8 +233,8 @@ DOCSTRING
 - `code`: DESCRIPTION
 - `resources`: DESCRIPTION
 """
-function PTSparseEnergyNet(place_size::Int64, transition_size::Int64, resource_size::Int64, code::Vector{S}, resources::Vector{Vector{E}}) where {S<:AbstractToken,E<:AbstractEnergyToken}
-    return PTSparseEnergyNet(
+function EnergySparseNet(place_size::Int64, transition_size::Int64, resource_size::Int64, code::Vector{S}, resources::Vector{Vector{E}}) where {S<:AbstractToken,E<:AbstractEnergyToken}
+    return EnergySparseNet(
         PTNetSparse(
             place_size,
             transition_size,
