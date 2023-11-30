@@ -20,7 +20,7 @@ DOCSTRING
 - `t_size::Int64`: DESCRIPTION
 - `r_size::Int64`: DESCRIPTION
 """
-mutable struct Rule <: AbstractDenseRule
+mutable struct BasicRule <: AbstractDenseRule
     label::Int64
     enabled::Bool
     replaced_places::Set{Int64}
@@ -105,7 +105,7 @@ end
 
 
 """
-    Rule(label::Int64, p_size::Int64, t_size::Int64, r_size::Int64, marking_redistribution::Function, code::Vector{S})
+    BasicRule(label::Int64, p_size::Int64, t_size::Int64, r_size::Int64, marking_redistribution::Function, code::Vector{S})
 
 DOCSTRING
 
@@ -117,7 +117,7 @@ DOCSTRING
 - `marking_redistribution`: DESCRIPTION
 - `code`: DESCRIPTION
 """
-function Rule(label::Int64, p_size::Int64, t_size::Int64, r_size::Int64, marking_redistribution::Function, code::Vector{S}) where {S<:AbstractRule}
+function BasicRule(label::Int64, p_size::Int64, t_size::Int64, r_size::Int64, marking_redistribution::Function, code::Vector{S}) where {S<:AbstractRule}
 
     #target 
     target_in::Array{Float64,3} = zeros(Float64, p_size, t_size, r_size)
@@ -259,7 +259,7 @@ end
 ## Functionality
 
 """
-    rebuild_net!(net::N, rule::Rule)
+    rebuild_net!(net::N, rule::BasicRule)
 
 DOCSTRING
 
@@ -313,7 +313,7 @@ end
 
 
 """
-    count_nonzero_target_elements(rule::Rule)
+    count_nonzero_target_elements(rule::BasicRule)
 
 DOCSTRING
 
@@ -350,7 +350,7 @@ end
 
 
 """
-    count_nonzero_effect_elements(rule::Rule)
+    count_nonzero_effect_elements(rule::BasicRule)
 
 DOCSTRING
 
@@ -544,7 +544,7 @@ end
 
 
 """
-    rewrite!(net::N, rule::Rule)
+    rewrite!(net::N, rule::BasicRule)
 
 DOCSTRING
 
@@ -740,7 +740,7 @@ end
 
 
 """
-    redistribute_marking_conserved(net::N, rule::Rule)
+    redistribute_marking_conserved(net::N, rule::BasicRule)
 
 DOCSTRING
 
@@ -773,7 +773,7 @@ end
 
 
 """
-    redistribute_marking_copy(net::N, rule::Rule)
+    redistribute_marking_copy(net::N, rule::BasicRule)
 
 DOCSTRING
 
