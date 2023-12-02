@@ -1,8 +1,38 @@
 
 ########################################################################################################################
-## BasicRule structures and constructors
+## Rule structures and constructors
+
+mutable struct RuleData{Tens <: AbstractArray, Mat <: AbstractArray}
+    label::Int64
+    enabled::Bool
+    replaced_places::Set{Int64}
+    # target to fullfill
+    target_in::Tens
+    target_out::Tens
+
+    # additional condition
+    control_marking::Mat
+
+    # effect
+    effect_in::Tens
+    effect_out::Tens
+
+    # auxilliary stuff
+    marking_redistribution::Function
+    transfer_relation_places::Dict{Int64,Set{Int64}}
+    transfer_relation_transitions::Dict{Int64,Set{Int64}}
+    old_marking::Mat
+    effect_marking::Mat
+
+    p_size::Int64
+    t_size::Int64
+    r_size::Int64
+end
+
+
+
 """
-BasicRule
+DenseRule
 
 DOCSTRING
 
@@ -20,30 +50,19 @@ DOCSTRING
 - `t_size::Int64`: DESCRIPTION
 - `r_size::Int64`: DESCRIPTION
 """
-mutable struct BasicRule <: AbstractDenseRule
-    label::Int64
-    enabled::Bool
-    replaced_places::Set{Int64}
-    # target to fullfill
-    target_in::Array{Float64,3}
-    target_out::Array{Float64,3}
+mutable struct DenseRule <: AbstractDenseRule   
+    data::RuleData{Array{Float64, 3}, Array{Float64, 2}}
+end
 
-    # additional condition
-    control_marking::Array{Float64,2}
 
-    # effect
-    effect_in::Array{Float64,3}
-    effect_out::Array{Float64,3}
-
-    # auxilliary stuff
-    marking_redistribution::Function
-    transfer_relation_places::Dict{Int64,Set{Int64}}
-    transfer_relation_transitions::Dict{Int64,Set{Int64}}
-    old_marking::Array{Float64,2}
-
-    p_size::Int64
-    t_size::Int64
-    r_size::Int64
+function Base.getproperty(d::DenseRule, s::Symbol)
+    if s in fieldnames(DenseRule) 
+        return getfield(d, s)
+    elseif s in fieldnames(RuleData{Array{Float64, 3}, Array{Float64, 2}}) 
+        return Base.getproperty(d.data, s)
+    else 
+        throw(ErrorException("Error, DenseRule has no field named $s"))
+    end
 end
 
 
@@ -67,6 +86,7 @@ function build_rule_from_code!(
     control_marking::Union{Array{Float64,2},SparseArray{Float64,2}},
     effect_in::Union{Array{Float64,3},SparseArray{Float64,3}},
     effect_out::Union{Array{Float64,3},SparseArray{Float64,3}},
+    effect_marking::Union{Array{Float64, 2}, SparseArray{Float64, 2}},
     transfer_relation_places::Dict{Int64,Set{Int64}},
     transfer_relation_transitions::Dict{Int64,Set{Int64}},
     code::Vector{S}) where {S<:AbstractRuleToken}
@@ -76,13 +96,14 @@ function build_rule_from_code!(
         if token.rulelabel == label
 
             if isempty(token.c) == false 
-            # control marking 
-            control_marking[token.p, :] += token.c
+                # control marking 
+                control_marking[token.p, :] += token.c
             end
 
             
-            # network elements
+            # actual elements for rewriting rule
             if isempty(token.replace) == false 
+
                 # target 
                 if token.k == P
                     target_in[token.p, token.t, :] += token.w
@@ -92,21 +113,23 @@ function build_rule_from_code!(
                     target_in = fill(-1.0, size(target.in)[3])
                 end
 
+                # add keys fo transfer 
+                if haskey(transfer_relation_places, token.p) == false 
+                    transfer_relation_places[token.p] = Set{Int64}()
+                end 
+
+                if haskey(transfer_relation_transitions, token.t)
+                    transfer_relation_transitions[token.t] = Set{Int64}()
+                end 
 
 
                 # effect
                 for ruletoken in token.replace
 
-                    if haskey(transfer_relation_places, token.p)
-
-                        push!(transfer_relation_places[token.p], ruletoken.p)
-
-                    else 
-                        transfer_relation_places[token.p] = Set{Int64}()
-
-                        push!(transfer_relation_places[token.p], ruletoken.p)
-
-                    end 
+                    # transfer relation
+                    push!(transfer_relation_places[token.p], ruletoken.p)
+                    
+                    push!(transfer_relation_places[token.p], ruletoken.p)
 
                     if haskey(transfer_relation_transitions, token.t) 
 
@@ -117,7 +140,7 @@ function build_rule_from_code!(
 
                     end
 
-
+                    # network matrices 
                     if ruletoken.k == P
                         effect_in[ruletoken.p, ruletoken.t, :] .+= ruletoken.w
 
@@ -127,6 +150,11 @@ function build_rule_from_code!(
                     elseif ruletoken.k == I
                         effect_in[ruletoken.p, ruletoken.t, :] = ruletoken.w
                     end
+
+                    # marking vector
+                    if any(ruletoken.m .≈ 0.)
+                        effect_marking[ruletoken.p, :] .+= ruletoken.m
+                    end
                 end
             end
         end
@@ -135,7 +163,7 @@ end
 
 
 """
-    BasicRule(label::Int64, p_size::Int64, t_size::Int64, r_size::Int64, marking_redistribution::Function, code::Vector{S})
+    DenseRule(label::Int64, p_size::Int64, t_size::Int64, r_size::Int64, marking_redistribution::Function, code::Vector{S})
 
 DOCSTRING
 
@@ -147,7 +175,7 @@ DOCSTRING
 - `marking_redistribution`: DESCRIPTION
 - `code`: DESCRIPTION
 """
-function BasicRule(label::Int64, p_size::Int64, t_size::Int64, r_size::Int64, marking_redistribution::Function, code::Vector{S}) where {S<:AbstractRuleToken}
+function DenseRule(label::Int64, p_size::Int64, t_size::Int64, r_size::Int64, marking_redistribution::Function, code::Vector{S}) where {S<:AbstractRuleToken}
 
     #target 
     target_in::Array{Float64,3} = zeros(Float64, p_size, t_size, r_size)
@@ -159,29 +187,33 @@ function BasicRule(label::Int64, p_size::Int64, t_size::Int64, r_size::Int64, ma
     # effect 
     effect_in::Array{Float64,3} = zeros(Float64, p_size, t_size, r_size)
     effect_out::Array{Float64,3} = zeros(Float64, p_size, t_size, r_size)
+    effect_marking::Array{Float64, 2} = zeros(Float64, p_size, r_size)
 
     #transfer relation 
     transfer_relation_places = Dict{Int64,Set{Int64}}()
     transfer_relation_transitions = Dict{Int64,Set{Int64}}()
 
     #building the constituents
-    build_rule_from_code!(label, target_in, target_out, control_marking, effect_in, effect_out, transfer_relation_places, transfer_relation_transitions, code)
+    build_rule_from_code!(label, target_in, target_out, control_marking, effect_in, effect_out, effect_marking, transfer_relation_places, transfer_relation_transitions, code)
 
-    return BasicRule(
-        label,
-        false,
-        Set(),
-        target_in,
-        target_out,
-        control_marking,
-        effect_in,
-        effect_out, marking_redistribution,
-        transfer_relation_places,
-        transfer_relation_transitions,
-        Array{Float64,2}(zeros(Float64, p_size, r_size)), 
-        p_size,
-        t_size,
-        r_size
+    return DenseRule(
+        RuleData{Array{Float64, 3}, Array{Float64, 2}}(
+            label,
+            false,
+            Set(),
+            target_in,
+            target_out,
+            control_marking,
+            effect_in,
+            effect_out, marking_redistribution,
+            transfer_relation_places,
+            transfer_relation_transitions,
+            Array{Float64,2}(zeros(Float64, p_size, r_size)), 
+            effect_marking,
+            p_size,
+            t_size,
+            r_size
+        )
     )
 end
 
@@ -207,30 +239,18 @@ DOCSTRING
 - `r_size::Int64`: DESCRIPTION
 """
 mutable struct SparseRule <: AbstractSparseRule
-    label::Int64
-    enabled::Bool
-    replaced_places::Set{Int64}
+    data::RuleData{SparseArray{Float64, 3}, SparseArray{Float64, 2}}
+end
 
-    # target to fullfill
-    target_in::SparseArray{Float64,3}
-    target_out::SparseArray{Float64,3}
 
-    # additional condition
-    control_marking::SparseArray{Float64,2}
-
-    # effect
-    effect_in::SparseArray{Float64,3}
-    effect_out::SparseArray{Float64,3}
-
-    # auxilliary stuff
-    marking_redistribution::Function
-    transfer_relation_places::Dict{Int64,Set{Int64}}
-    transfer_relation_transitions::Dict{Int64,Set{Int64}}
-    old_marking::SparseArray{Float64,2}
-    
-    p_size::Int64
-    t_size::Int64
-    r_size::Int64
+function Base.getproperty(d::SparseRule, s::Symbol)
+    if s in fieldnames(SparseRule) 
+        return getfield(d, s)
+    elseif s in fieldnames(RuleData{SparseArray{Float64, 3}, SparseArray{Float64, 2}}) 
+        return Base.getproperty(d.data, s)
+    else 
+        throw(ErrorException("Error, DenseRule has no field named $s"))
+    end
 end
 
 
@@ -254,20 +274,22 @@ function SparseRule(label::Int64, p_size::Int64, t_size::Int64, r_size::Int64, m
     target_out::SparseArray{Float64,3} = SparseArray(zeros(Float64, p_size, t_size, r_size))
 
     #additional condition
-    control_marking::SparseArray{Float64,2} = SparseArray{zeros(Float64, p_size, r_size)}
+    control_marking::SparseArray{Float64,2} = SparseArray(zeros(Float64, p_size, r_size))
 
     # effect 
-    effect_in::SparseArray{Float64,3} = SparseArray{zeros(Float64, p_size, t_size, r_size)}
-    effect_out::SparseArray{Float64,3} = SparseArray{zeros(Float64, p_size, t_size, r_size)}
+    effect_in::SparseArray{Float64,3} = SparseArray(zeros(Float64, p_size, t_size, r_size))
+    effect_out::SparseArray{Float64,3} = SparseArray(zeros(Float64, p_size, t_size, r_size))
+    effect_marking::Array{Float64, 2} = SparseArray(zeros(Float64, p_size, r_size))
 
     #transfer relation 
     transfer_relation_places = Dict{Int64,Set{Int64}}()
     transfer_relation_transitions = Dict{Int64,Set{Int64}}()
 
     #building the constituents
-    build_rule_from_code!(label, target_in, target_out, control_marking, effect_in, effect_out, transfer_relation_places, transfer_relation_transitions, code)
+    build_rule_from_code!(label, target_in, target_out, control_marking, effect_in, effect_out, effect_marking, transfer_relation_places, transfer_relation_transitions, code)
 
     return SparseRule(
+        RuleData{SparseArray{Float64, 3}, SparseArray{Float64, 2}}(
         label,
         false,
         Set(),
@@ -275,13 +297,15 @@ function SparseRule(label::Int64, p_size::Int64, t_size::Int64, r_size::Int64, m
         target_out,
         control_marking,
         effect_in,
-        effect_out, marking_redistribution,
+        effect_out, 
+        marking_redistribution,
         transfer_relation_places,
         transfer_relation_transitions,
         SparseArray{Float64,2}(zeros(Float64, p_size, r_size)), 
+        effect_marking,
         p_size,
         t_size,
-        r_size
+        r_size)
     )
 end
 
@@ -291,7 +315,7 @@ end
 ## Functionality
 
 """
-    rebuild_net!(net::N, rule::BasicRule)
+    rebuild_net!(net::N, rule::DenseRule)
 
 DOCSTRING
 
@@ -345,7 +369,7 @@ end
 
 
 """
-    count_nonzero_target_elements(rule::BasicRule)
+    count_nonzero_target_elements(rule::DenseRule)
 
 DOCSTRING
 
@@ -382,7 +406,7 @@ end
 
 
 """
-    count_nonzero_effect_elements(rule::BasicRule)
+    count_nonzero_effect_elements(rule::DenseRule)
 
 DOCSTRING
 
@@ -576,7 +600,7 @@ end
 
 
 """
-    rewrite!(net::N, rule::BasicRule)
+    rewrite!(net::N, rule::DenseRule)
 
 DOCSTRING
 
@@ -772,7 +796,7 @@ end
 
 
 """
-    redistribute_marking_conserved(net::N, rule::BasicRule)
+    redistribute_marking_conserved(net::N, rule::DenseRule)
 
 DOCSTRING
 
@@ -805,7 +829,7 @@ end
 
 
 """
-    redistribute_marking_copy(net::N, rule::BasicRule)
+    redistribute_marking_copy(net::N, rule::DenseRule)
 
 DOCSTRING
 
