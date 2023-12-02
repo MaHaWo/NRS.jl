@@ -72,31 +72,61 @@ function build_rule_from_code!(
     code::Vector{S}) where {S<:AbstractRuleToken}
 
     for token in code
-        if token.rulelabel == label && isempty(token.replace) == false
 
-            # target 
-            if token.k == P
-                target_in[token.p, token.t, :] += token.w
-            elseif token.k == T
-                target_out[token.p, token.t, :] += token.w
-            elseif token.k == I
-                target_in = fill(-1.0, size(target.in)[3])
-            end
+        if token.rulelabel == label
 
+            if isempty(token.c) == false 
             # control marking 
             control_marking[token.p, :] += token.c
+            end
 
-            # effect
-            for ruletoken in token.replace
-                push!(transfer_relation_places[token.p], ruletoken.p)
-                push!(transfer_relation_transitions[token.t], ruletoken.t)
+            
+            # network elements
+            if isempty(token.replace) == false 
+                # target 
+                if token.k == P
+                    target_in[token.p, token.t, :] += token.w
+                elseif token.k == T
+                    target_out[token.p, token.t, :] += token.w
+                elseif token.k == I
+                    target_in = fill(-1.0, size(target.in)[3])
+                end
 
-                if ruletoken.k == P
-                    effect_in[ruletoken.p, ruletoken.t, :] += ruletoken.w
-                elseif ruletoken.k == T
-                    effect_out[ruletoken.p, ruletoken.t, :] += ruletoken.w
-                elseif ruletoken.k == I
-                    effect_in = fill(-1.0, size(target.in)[3])
+
+
+                # effect
+                for ruletoken in token.replace
+
+                    if haskey(transfer_relation_places, token.p)
+
+                        push!(transfer_relation_places[token.p], ruletoken.p)
+
+                    else 
+                        transfer_relation_places[token.p] = Set{Int64}()
+
+                        push!(transfer_relation_places[token.p], ruletoken.p)
+
+                    end 
+
+                    if haskey(transfer_relation_transitions, token.t) 
+
+                        push!(transfer_relation_transitions[token.t], ruletoken.t)
+                    else 
+                        transfer_relation_transitions[token.t] = Set{Int64}()
+                        push!(transfer_relation_transitions[token.t], ruletoken.t)
+
+                    end
+
+
+                    if ruletoken.k == P
+                        effect_in[ruletoken.p, ruletoken.t, :] .+= ruletoken.w
+
+                    elseif ruletoken.k == T
+                        effect_out[ruletoken.p, ruletoken.t, :] .+= ruletoken.w
+
+                    elseif ruletoken.k == I
+                        effect_in[ruletoken.p, ruletoken.t, :] = ruletoken.w
+                    end
                 end
             end
         end
@@ -117,7 +147,7 @@ DOCSTRING
 - `marking_redistribution`: DESCRIPTION
 - `code`: DESCRIPTION
 """
-function BasicRule(label::Int64, p_size::Int64, t_size::Int64, r_size::Int64, marking_redistribution::Function, code::Vector{S}) where {S<:AbstractRule}
+function BasicRule(label::Int64, p_size::Int64, t_size::Int64, r_size::Int64, marking_redistribution::Function, code::Vector{S}) where {S<:AbstractRuleToken}
 
     #target 
     target_in::Array{Float64,3} = zeros(Float64, p_size, t_size, r_size)
@@ -148,7 +178,8 @@ function BasicRule(label::Int64, p_size::Int64, t_size::Int64, r_size::Int64, ma
         effect_out, marking_redistribution,
         transfer_relation_places,
         transfer_relation_transitions,
-        Array{Float64,2}(), p_size,
+        Array{Float64,2}(zeros(Float64, p_size, r_size)), 
+        p_size,
         t_size,
         r_size
     )
@@ -247,7 +278,8 @@ function SparseRule(label::Int64, p_size::Int64, t_size::Int64, r_size::Int64, m
         effect_out, marking_redistribution,
         transfer_relation_places,
         transfer_relation_transitions,
-        SparseArray{Float64,2}(), p_size,
+        SparseArray{Float64,2}(zeros(Float64, p_size, r_size)), 
+        p_size,
         t_size,
         r_size
     )

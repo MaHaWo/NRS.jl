@@ -1,4 +1,6 @@
 
+
+
 """
     make_discrete_encoding_test_data()
 
@@ -175,7 +177,7 @@ DOCSTRING
 """
 function make_discrete_system_test_data()
     # make input matrix 
-    in::Array{Float64, 3} = zeros(Float64, 7, 5, 4)
+    in::Array{Float64,3} = zeros(Float64, 7, 5, 4)
     in[1, 1, :] = [1.0, 0.0, 0.0, 0.0]
     in[2, 2, :] = [1.0, 0.0, 0.0, 0.0]
     in[2, 5, :] = [1.0, 0.0, 0.0, 0.0]
@@ -185,7 +187,7 @@ function make_discrete_system_test_data()
     in[4, 5, :] = [-1.0, -1.0, -1.0, -1.0]
 
     # make output matrix 
-    out::Array{Float64, 3} = zeros(Float64, 7, 5, 4)
+    out::Array{Float64,3} = zeros(Float64, 7, 5, 4)
     out[1, 5, :] = [1.0, 0.0, 0.0, 0.0]
     out[2, 1, :] = [1.0, 0.0, 0.0, 0.0]
     out[3, 2, :] = [1.0, 0.0, 0.0, 0.0]
@@ -194,7 +196,7 @@ function make_discrete_system_test_data()
     out[7, 4, :] = [0.0, 0.0, 1.0, 0.0]
 
     # make marking 
-    mark::Array{Float64, 2} = zeros(Float64, 7, 4)
+    mark::Array{Float64,2} = zeros(Float64, 7, 4)
     mark[1, :] = [5.0, 0.0, 0.0, 0.0]
     mark[4, :] = [0.0, 0.0, 5.0, 0.0]
 
@@ -349,4 +351,172 @@ function make_energy_discrete_system_test_data()
 
 
     return (resources=resources, code=code, energylookup=energylookup,)
+end
+
+
+@enum RP begin
+    user_job = 1
+    buffer = 2
+    out_tray = 3
+    user_printed = 4
+    error_stack = 5
+    paper = 6
+    buffer_1 = 7
+    buffer_2 = 8
+    buffer_3 = 9
+end
+
+
+@enum RT begin
+    submit = 1
+    print_out = 2
+    collect = 3
+    throw_error = 4
+    print_1 = 5
+    print_2 = 6
+    print_3 = 7
+
+end
+
+
+@enum RR begin
+    Job = 1
+    Paper = 2
+    Printed = 3
+    Signal = 4
+end
+
+
+
+"""
+    make_ruletest_data()
+
+DOCSTRING
+"""
+function make_ruletest_data()
+    code = [
+        NRS.Token(
+            NRS.P,
+            Int64(user_job),
+            Int64(submit),
+            [1.0, 0, 0, 0], #w 
+            [5.0, 0, 0, 0], #m 
+            1, # rulelabel
+            NRS.BasicToken{Vector{Float64}}[], # rewrite
+            [5.0, 0, 0, 0] #control marking 
+        ),
+        NRS.Token(
+            NRS.T,
+            Int64(buffer),
+            Int64(submit),
+            [1.0, 0, 0, 0], #w 
+            [0.0, 0, 0, 0], #m 
+            0, # rulelabel
+            NRS.BasicToken{Vector{Float64}}[], # rewrite
+            [0.0, 0.0, 0.0, 0.0] #control marking 
+        ),
+        NRS.Token(
+            NRS.P,
+            Int64(buffer),
+            Int64(print_out),
+            [1.0, 0, 0, 0], #w 
+            [0.0, 0, 0, 0], #m  
+            0, # rulelabel
+            NRS.BasicToken{Vector{Float64}}[], # rewrite
+            [0, 0, 0.0, 0] #control marking 
+        ),
+        NRS.Token(
+            NRS.T,
+            Int64(out_tray),
+            Int64(print_out),
+            [0.0, 0, 1, 0],
+            [0.0, 0, 0, 0],
+            1,
+            NRS.BasicToken{Vector{Float64}}[
+                NRS.BasicToken(NRS.T, Int64(out_tray), Int64(print_out), [0.0, 0, 1, 0], [0.0, 0, 2, 0]),
+                NRS.BasicToken(NRS.P, Int64(paper), Int64(print_out), [0.0, 1, 0, 0], [0, 5.0, 0, 0]),
+                NRS.BasicToken(NRS.I, Int64(paper), Int64(throw_error), [-1.0, -1, -1, -1], [0.0, 0, 0, 0]),
+                NRS.BasicToken(NRS.T, Int64(error_stack), Int64(throw_error), [0.0, 0, 0, 1], [0.0, 0, 0, 1]),
+                NRS.BasicToken(NRS.I, Int64(error_stack), Int64(print_out), [-1.0, -1, -1, -1], [0.0, 0, 0, 0]),
+                NRS.BasicToken(NRS.I, Int64(error_stack), Int64(throw_error), [-1.0, -1, -1, -1], [0.0, 0, 0, 0])
+            ],
+            [0.0, 0, 0, 0]
+        ),
+        NRS.Token(
+            NRS.P,
+            Int64(out_tray),
+            Int64(collect),
+            [0, 0, 1.0, 0],
+            [0, 0, 0.0, 0],
+            0,
+            NRS.BasicToken{Vector{Float64}}[],
+            [0, 0.0, 0, 0],
+        ),
+        NRS.Token(
+            NRS.T,
+            Int64(user_printed),
+            Int64(collect),
+            [0, 0, 1.0, 0],
+            [0, 0, 0.0, 0],
+            0,
+            NRS.BasicToken{Vector{Float64}}[],
+            [0, 0, 0.0, 0]
+        ),
+    ]
+
+
+    net_input = zeros(Float64, 15, 15, 4)
+
+    net_input[1, 1, :] = [1.0, 0, 0, 0]
+    net_input[2, 2, :] = [1.0, 0, 0, 0]
+    net_input[3, 3, :] = [0, 0, 1.0, 0]
+
+    net_output = zeros(Float64, 15, 15, 4)
+    net_output[2, 1, :] = [1, 0, 0, 0]
+    net_output[3, 2, :] = [0, 0, 1, 0]
+    net_output[4, 3, :] = [0, 0, 1, 0]
+
+    net_marking = zeros(Float64, 15, 4)
+    net_marking[1, :] = [5, 0, 0, 0]
+
+    rule_target_in = zeros(Float64, 15, 15, 4)
+    rule_target_out = zeros(Float64, 15, 15, 4)
+    rule_target_out[3, 2, :] = [0, 0, 1, 0]
+
+    rule_effect_in = zeros(Float64, 15, 15, 4)
+    rule_effect_in[6, 2, :] = [0.0, 1.0, 0.0, 0.0]
+    rule_effect_in[6, 4, :] = [-1, -1, -1, -1]
+    rule_effect_in[5, 2, :] = [-1, -1, -1, -1]
+    rule_effect_in[5, 4, :] = [-1, -1, -1, -1]
+
+
+    rule_effect_out = zeros(Float64, 15, 15, 4)
+    rule_effect_out[5, 4, :] = [0, 0, 0, 1]
+    rule_effect_out[3, 2, :] = [0, 0, 1, 0]
+
+    control_marking = zeros(Float64, 15, 4)
+    control_marking[1, :] = [5, 0, 0, 0]
+
+    transfer_relation_places = Dict(
+        Int64(out_tray) =>Set([Int64(out_tray),
+            Int64(paper),
+            Int64(error_stack)])
+    )
+
+    transfer_relation_transitions = Dict(
+        Int64(print_out) => Set([Int64(print_out), Int64(throw_error)])
+    )
+
+    return (code=code,
+        net_input=net_input,
+        net_output=net_output,
+        net_marking=net_marking,
+        rule_target_in=rule_target_in,
+        rule_target_out=rule_target_out,
+        rule_effect_in=rule_effect_in,
+        rule_effect_out=rule_effect_out,
+        control_marking=control_marking,
+        transfer_relation_places=transfer_relation_places,
+        transfer_relation_transitions=transfer_relation_transitions
+    )
 end
