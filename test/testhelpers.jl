@@ -130,7 +130,7 @@ function make_discrete_encoding_test_data_sparse()
     NRS.build_from_code!(code, in, out, mark)
 
     # build the net
-    net = NRS.SparseBasicNet(
+    net = NRS.BasicSparseNet(
         in,
         out,
         mark,
@@ -152,7 +152,7 @@ function make_discrete_encoding_test_data_sparse()
 
     NRS.build_from_code!(altcode, altin, altout, altmark)
 
-    altnet = NRS.SparseBasicNet(
+    altnet = NRS.BasicSparseNet(
         altin,
         altout,
         altmark,
@@ -297,7 +297,7 @@ function make_conflict_data_sparse()
     marking[1, :] = [1, 1]
     marking[2, :] = [2, 2]
 
-    net = NRS.SparseBasicNet(
+    net = NRS.BasicSparseNet(
         3, 2, 2, code
     )
 
@@ -393,7 +393,7 @@ end
 
 DOCSTRING
 """
-function make_ruletest_data()
+function make_ruletest_data(t::Type{T}) where {T <: AbstractArray}
     code = [
         NRS.Token(
             NRS.P,
@@ -465,22 +465,22 @@ function make_ruletest_data()
     ]
 
 
-    net_input = zeros(Float64, 15, 15, 4)
+    net_input::T = zeros(Float64, 15, 15, 4)
 
     net_input[1, 1, :] = [1.0, 0, 0, 0]
     net_input[2, 2, :] = [1.0, 0, 0, 0]
     net_input[3, 3, :] = [0, 0, 1.0, 0]
 
-    net_output = zeros(Float64, 15, 15, 4)
+    net_output::T = zeros(Float64, 15, 15, 4)
     net_output[2, 1, :] = [1, 0, 0, 0]
     net_output[3, 2, :] = [0, 0, 1, 0]
     net_output[4, 3, :] = [0, 0, 1, 0]
 
-    net_marking = zeros(Float64, 15, 4)
+    net_marking::T = zeros(Float64, 15, 4)
     net_marking[1, :] = [5, 0, 0, 0]
 
-    rule_target_in = zeros(Float64, 15, 15, 4)
-    rule_target_out = zeros(Float64, 15, 15, 4)
+    rule_target_in::T = zeros(Float64, 15, 15, 4)
+    rule_target_out::T = zeros(Float64, 15, 15, 4)
     rule_target_out[3, 2, :] = [0, 0, 1, 0]
 
     rule_effect_in = zeros(Float64, 15, 15, 4)
@@ -490,11 +490,17 @@ function make_ruletest_data()
     rule_effect_in[5, 4, :] = [-1, -1, -1, -1]
 
 
-    rule_effect_out = zeros(Float64, 15, 15, 4)
+    rule_effect_out::T = zeros(Float64, 15, 15, 4)
     rule_effect_out[5, 4, :] = [0, 0, 0, 1]
     rule_effect_out[3, 2, :] = [0, 0, 1, 0]
 
-    control_marking = zeros(Float64, 15, 4)
+    rule_effect_marking::T = zeros(Float64, 15, 4)
+    rule_effect_marking[Int64(out_tray), :] = [0.0, 0, 2, 0,]
+    rule_effect_marking[Int64(paper), :] = [0, 5.0, 0, 0,]
+    rule_effect_marking[ Int64(error_stack), :] = [0.0, 0, 0, 1]
+
+
+    control_marking::T = zeros(Float64, 15, 4)
     control_marking[1, :] = [5, 0, 0, 0]
 
     transfer_relation_places = Dict(
@@ -515,6 +521,7 @@ function make_ruletest_data()
         rule_target_out=rule_target_out,
         rule_effect_in=rule_effect_in,
         rule_effect_out=rule_effect_out,
+        rule_effect_marking = rule_effect_marking,
         control_marking=control_marking,
         transfer_relation_places=transfer_relation_places,
         transfer_relation_transitions=transfer_relation_transitions

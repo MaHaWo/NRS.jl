@@ -7,10 +7,10 @@ using Test
 using SparseArrayKit
 
 @testset "dense_rule_construction_test" begin
-    data = make_ruletest_data()
+    data = make_ruletest_data(Array)
 
     net = NRS.BasicDenseNet(15, 15, 4, data.code)
-    rule = NRS.BasicRule(1, 15, 15, 4, NRS.redistribute_marking_conserved, data.code)
+    rule = NRS.DenseRule(1, 15, 15, 4, NRS.redistribute_marking_conserved, data.code)
 
     @test net.input ≈ data.net_input
     @test net.output ≈ data.net_output
@@ -25,10 +25,10 @@ using SparseArrayKit
 
     @test rule.transfer_relation_places == data.transfer_relation_places
     @test rule.transfer_relation_transitions == data.transfer_relation_transitions
+
+    @test rule.effect_marking ≈ data.rule_effect_marking
 end
 
-@testset "dense_rule_auxilliary_test" begin
-end
 
 @testset "dense_rule_rewriting_test" begin 
 end
