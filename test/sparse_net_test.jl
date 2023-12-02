@@ -4,7 +4,7 @@
 
     codefixture = make_discrete_encoding_test_data_sparse()
 
-    net = NRS.SparseBasicNet(7, 5, 4, codefixture.code)
+    net = NRS.BasicSparseNet(7, 5, 4, codefixture.code)
 
     NRS.compute_enabled!(net)
 
@@ -39,7 +39,7 @@ end
 
     NRS.compute_input_interface_transitions!(fixture.altnet)
 
-    @test fixture.net isa NRS.SparseBasicNet
+    @test fixture.net isa NRS.BasicSparseNet
 
     @test fixture.net.input isa SparseArray
 
@@ -171,7 +171,7 @@ end
     fixture = make_energy_discrete_system_test_data()
 
     net = NRS.EnergySparseNet(
-        NRS.SparseBasicNet(5, 3, 3, fixture.code),
+        NRS.BasicSparseNet(5, 3, 3, fixture.code),
         NRS.EnergyLookup(fixture.resources)
     )
 
@@ -193,7 +193,7 @@ end
     fixture = make_energy_discrete_system_test_data()
 
     net = NRS.EnergySparseNet(
-        NRS.SparseBasicNet(5, 3, 3, fixture.code),
+        NRS.BasicSparseNet(5, 3, 3, fixture.code),
         NRS.EnergyLookup(fixture.resources)
     )
 
@@ -216,7 +216,7 @@ end
     fixture = make_energy_discrete_system_test_data()
 
     net = NRS.EnergySparseNet(
-        NRS.SparseBasicNet(5, 3, 3, fixture.code),
+        NRS.BasicSparseNet(5, 3, 3, fixture.code),
         NRS.EnergyLookup(fixture.resources)
     )
     net.marking[2, :] = [3., 2., 2.]

@@ -2,7 +2,7 @@
 ## PTNet
 
 """
-    SparseBasicNet
+    BasicSparseNet
 
 DOCSTRING
 
@@ -18,7 +18,7 @@ DOCSTRING
 - `output_interface_transitions::SparseArray{Bool, 1}`: DESCRIPTION
 - `noninhibitor_arcs::SparseArray{Bool, 2}`: DESCRIPTION
 """
-mutable struct SparseBasicNet <: AbstractBasicSparseDiscreteNet
+mutable struct BasicSparseNet <: AbstractBasicSparseDiscreteNet
     input::SparseArray{Float64,3}
     output::SparseArray{Float64,3}
     marking::SparseArray{Float64,2}
@@ -33,7 +33,7 @@ end
 
 
 """
-    SparseBasicNet(in::SparseArray{Float64, 3}, out::SparseArray{Float64, 3}, mark::SparseArray{Float64, 2})
+    BasicSparseNet(in::SparseArray{Float64, 3}, out::SparseArray{Float64, 3}, mark::SparseArray{Float64, 2})
 
 DOCSTRING
 
@@ -42,7 +42,7 @@ DOCSTRING
 - `out`: DESCRIPTION
 - `mark`: DESCRIPTION
 """
-function SparseBasicNet(in::SparseArray{Float64,3}, out::SparseArray{Float64,3}, mark::SparseArray{Float64,2})
+function BasicSparseNet(in::SparseArray{Float64,3}, out::SparseArray{Float64,3}, mark::SparseArray{Float64,2})
 
     ps = size(in)[1]
     ts = size(in)[2]
@@ -114,7 +114,7 @@ end
 
 
 """
-    SparseBasicNet(place_size::Int64, transition_size::Int64, resource_size::Int64, code::Vector{S})
+    BasicSparseNet(place_size::Int64, transition_size::Int64, resource_size::Int64, code::Vector{S})
 
 DOCSTRING
 
@@ -124,7 +124,7 @@ DOCSTRING
 - `resource_size`: DESCRIPTION
 - `code`: DESCRIPTION
 """
-function SparseBasicNet(place_size::Int64, transition_size::Int64, resource_size::Int64, code::Vector{S}) where {S<:AbstractToken}
+function BasicSparseNet(place_size::Int64, transition_size::Int64, resource_size::Int64, code::Vector{S}) where {S<:AbstractToken}
 
     # make arrays/tensors
     in = SparseArrayKit.SparseArray(zeros(Float64, place_size, transition_size, resource_size))
@@ -138,7 +138,7 @@ function SparseBasicNet(place_size::Int64, transition_size::Int64, resource_size
     build_from_code!(code, in, out, mark)
 
     # build the net
-    net = SparseBasicNet(
+    net = BasicSparseNet(
         in,
         out,
         mark,
@@ -175,11 +175,11 @@ end
 DOCSTRING
 
 # Fields:
-- `basenet::SparseBasicNet`: DESCRIPTION
+- `basenet::BasicSparseNet`: DESCRIPTION
 - `energy::EnergyLookup`: DESCRIPTION
 """
 mutable struct EnergySparseNet <: AbstractEnergySparseDiscreteNet
-    basenet::SparseBasicNet
+    basenet::BasicSparseNet
     energy::EnergyLookup
 end
 
