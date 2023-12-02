@@ -35,7 +35,7 @@ DOCSTRING
 """
 struct Token{T} <: AbstractRuleToken
     basic::BasicToken{T}
-    rulelabellabel::Int64
+    rulelabel::Int64
     replace::Vector{BasicToken{T}}
     c::T
 end
