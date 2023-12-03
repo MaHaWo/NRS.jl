@@ -2,7 +2,7 @@
 ########################################################################################################################
 ## Rule structures and constructors
 
-mutable struct RuleData{Tens <: AbstractArray, Mat <: AbstractArray}
+mutable struct RuleData{Tens<:AbstractArray,Mat<:AbstractArray}
     label::Int64
     enabled::Bool
     replaced_places::Set{Int64}
@@ -50,20 +50,33 @@ DOCSTRING
 - `t_size::Int64`: DESCRIPTION
 - `r_size::Int64`: DESCRIPTION
 """
-mutable struct DenseRule <: AbstractDenseRule   
-    data::RuleData{Array{Float64, 3}, Array{Float64, 2}}
+mutable struct DenseRule <: AbstractDenseRule
+    data::RuleData{Array{Float64,3},Array{Float64,2}}
 end
 
 
 function Base.getproperty(d::DenseRule, s::Symbol)
-    if s in fieldnames(DenseRule) 
+    if s in fieldnames(DenseRule)
         return getfield(d, s)
-    elseif s in fieldnames(RuleData{Array{Float64, 3}, Array{Float64, 2}}) 
+    elseif s in fieldnames(RuleData{Array{Float64,3},Array{Float64,2}})
         return Base.getproperty(d.data, s)
-    else 
+    else
         throw(ErrorException("Error, DenseRule has no field named $s"))
     end
 end
+
+
+
+function Base.setproperty!(d::DenseRule, s::Symbol, x)
+    if s in fieldnames(DenseRule)
+        return setfield(d, s, x)
+    elseif s in fieldnames(RuleData{Array{Float64,3},Array{Float64,2}})
+        return Base.setproperty!(d.data, s, x)
+    else
+        throw(ErrorException("Error, DenseRule has no field named $s"))
+    end
+end
+
 
 
 """
@@ -86,7 +99,7 @@ function build_rule_from_code!(
     control_marking::Union{Array{Float64,2},SparseArray{Float64,2}},
     effect_in::Union{Array{Float64,3},SparseArray{Float64,3}},
     effect_out::Union{Array{Float64,3},SparseArray{Float64,3}},
-    effect_marking::Union{Array{Float64, 2}, SparseArray{Float64, 2}},
+    effect_marking::Union{Array{Float64,2},SparseArray{Float64,2}},
     transfer_relation_places::Dict{Int64,Set{Int64}},
     transfer_relation_transitions::Dict{Int64,Set{Int64}},
     code::Vector{S}) where {S<:AbstractRuleToken}
@@ -95,14 +108,14 @@ function build_rule_from_code!(
 
         if token.rulelabel == label
 
-            if isempty(token.c) == false 
+            if isempty(token.c) == false
                 # control marking 
                 control_marking[token.p, :] += token.c
             end
 
-            
+
             # actual elements for rewriting rule
-            if isempty(token.replace) == false 
+            if isempty(token.replace) == false
 
                 # target 
                 if token.k == P
@@ -114,13 +127,13 @@ function build_rule_from_code!(
                 end
 
                 # add keys fo transfer 
-                if haskey(transfer_relation_places, token.p) == false 
+                if haskey(transfer_relation_places, token.p) == false
                     transfer_relation_places[token.p] = Set{Int64}()
-                end 
+                end
 
                 if haskey(transfer_relation_transitions, token.t)
                     transfer_relation_transitions[token.t] = Set{Int64}()
-                end 
+                end
 
 
                 # effect
@@ -128,13 +141,13 @@ function build_rule_from_code!(
 
                     # transfer relation
                     push!(transfer_relation_places[token.p], ruletoken.p)
-                    
+
                     push!(transfer_relation_places[token.p], ruletoken.p)
 
-                    if haskey(transfer_relation_transitions, token.t) 
+                    if haskey(transfer_relation_transitions, token.t)
 
                         push!(transfer_relation_transitions[token.t], ruletoken.t)
-                    else 
+                    else
                         transfer_relation_transitions[token.t] = Set{Int64}()
                         push!(transfer_relation_transitions[token.t], ruletoken.t)
 
@@ -152,7 +165,7 @@ function build_rule_from_code!(
                     end
 
                     # marking vector
-                    if any(ruletoken.m .≈ 0.)
+                    if any(ruletoken.m .≈ 0.0)
                         effect_marking[ruletoken.p, :] .+= ruletoken.m
                     end
                 end
@@ -187,7 +200,7 @@ function DenseRule(label::Int64, p_size::Int64, t_size::Int64, r_size::Int64, ma
     # effect 
     effect_in::Array{Float64,3} = zeros(Float64, p_size, t_size, r_size)
     effect_out::Array{Float64,3} = zeros(Float64, p_size, t_size, r_size)
-    effect_marking::Array{Float64, 2} = zeros(Float64, p_size, r_size)
+    effect_marking::Array{Float64,2} = zeros(Float64, p_size, r_size)
 
     #transfer relation 
     transfer_relation_places = Dict{Int64,Set{Int64}}()
@@ -197,7 +210,7 @@ function DenseRule(label::Int64, p_size::Int64, t_size::Int64, r_size::Int64, ma
     build_rule_from_code!(label, target_in, target_out, control_marking, effect_in, effect_out, effect_marking, transfer_relation_places, transfer_relation_transitions, code)
 
     return DenseRule(
-        RuleData{Array{Float64, 3}, Array{Float64, 2}}(
+        RuleData{Array{Float64,3},Array{Float64,2}}(
             label,
             false,
             Set(),
@@ -208,7 +221,7 @@ function DenseRule(label::Int64, p_size::Int64, t_size::Int64, r_size::Int64, ma
             effect_out, marking_redistribution,
             transfer_relation_places,
             transfer_relation_transitions,
-            Array{Float64,2}(zeros(Float64, p_size, r_size)), 
+            Array{Float64,2}(zeros(Float64, p_size, r_size)),
             effect_marking,
             p_size,
             t_size,
@@ -239,16 +252,16 @@ DOCSTRING
 - `r_size::Int64`: DESCRIPTION
 """
 mutable struct SparseRule <: AbstractSparseRule
-    data::RuleData{SparseArray{Float64, 3}, SparseArray{Float64, 2}}
+    data::RuleData{SparseArray{Float64,3},SparseArray{Float64,2}}
 end
 
 
 function Base.getproperty(d::SparseRule, s::Symbol)
-    if s in fieldnames(SparseRule) 
+    if s in fieldnames(SparseRule)
         return getfield(d, s)
-    elseif s in fieldnames(RuleData{SparseArray{Float64, 3}, SparseArray{Float64, 2}}) 
+    elseif s in fieldnames(RuleData{SparseArray{Float64,3},SparseArray{Float64,2}})
         return Base.getproperty(d.data, s)
-    else 
+    else
         throw(ErrorException("Error, DenseRule has no field named $s"))
     end
 end
@@ -279,7 +292,7 @@ function SparseRule(label::Int64, p_size::Int64, t_size::Int64, r_size::Int64, m
     # effect 
     effect_in::SparseArray{Float64,3} = SparseArray(zeros(Float64, p_size, t_size, r_size))
     effect_out::SparseArray{Float64,3} = SparseArray(zeros(Float64, p_size, t_size, r_size))
-    effect_marking::Array{Float64, 2} = SparseArray(zeros(Float64, p_size, r_size))
+    effect_marking::Array{Float64,2} = SparseArray(zeros(Float64, p_size, r_size))
 
     #transfer relation 
     transfer_relation_places = Dict{Int64,Set{Int64}}()
@@ -289,23 +302,23 @@ function SparseRule(label::Int64, p_size::Int64, t_size::Int64, r_size::Int64, m
     build_rule_from_code!(label, target_in, target_out, control_marking, effect_in, effect_out, effect_marking, transfer_relation_places, transfer_relation_transitions, code)
 
     return SparseRule(
-        RuleData{SparseArray{Float64, 3}, SparseArray{Float64, 2}}(
-        label,
-        false,
-        Set(),
-        target_in,
-        target_out,
-        control_marking,
-        effect_in,
-        effect_out, 
-        marking_redistribution,
-        transfer_relation_places,
-        transfer_relation_transitions,
-        SparseArray{Float64,2}(zeros(Float64, p_size, r_size)), 
-        effect_marking,
-        p_size,
-        t_size,
-        r_size)
+        RuleData{SparseArray{Float64,3},SparseArray{Float64,2}}(
+            label,
+            false,
+            Set(),
+            target_in,
+            target_out,
+            control_marking,
+            effect_in,
+            effect_out,
+            marking_redistribution,
+            transfer_relation_places,
+            transfer_relation_transitions,
+            SparseArray{Float64,2}(zeros(Float64, p_size, r_size)),
+            effect_marking,
+            p_size,
+            t_size,
+            r_size)
     )
 end
 
@@ -338,24 +351,24 @@ function rebuild_net!(rule::R, net::N) where {N<:AbstractNet,R<:AbstractRule}
         s = size(net.input)
 
         input::TensorType = zeros(rule.p_size, rule.t_size, rule.r_size)
-        in[1:s[1], 1:s[2], 1:s[3]] = net.input
+        input[1:s[1], 1:s[2], 1:s[3]] .= net.input
         net.input = input
 
         out::TensorType = zeros(rule.p_size, rule.t_size, rule.r_size)
-        in[1:s[1], 1:s[2], 1:s[3]] = net.output
+        out[1:s[1], 1:s[2], 1:s[3]] .= net.output
         net.output = out
 
         mark::MarkingType = zeros(rule.p_size, rule.r_size)
-        mark[1:s[1], 1:s[3]] = net.marking
+        mark[1:s[1], 1:s[3]] .= net.marking
         net.marking = mark
 
         enabled::BVecType = zeros(Bool, rule.t_size)
-        enabled[1:s[2]] = net.enabled
+        enabled[1:s[2]] .= net.enabled
         net.enabled = enabled
 
         net.noninhibitor_arcs::BMatrixType = zeros(Bool, rule.p_size, rule.t_size)
         net.input_interface_places::BVecType = zeros(Bool, rule.p_size,)
-        net.ouput_interface_places::BVecType = zeros(Bool, rule.p_size,)
+        net.output_interface_places::BVecType = zeros(Bool, rule.p_size,)
         net.input_interface_transitions::BVecType = zeros(Bool, rule.t_size,)
         net.output_interface_transitions::BVecType = zeros(Bool, rule.t_size,)
 
@@ -392,7 +405,7 @@ function count_nonzero_target_elements(rule::R)::Dict{String,Int64} where {R<:Ab
     end
 
     for p in 1:size(rule.target_out)[1]
-        for t in 1:size(rule.targe_out)[2]
+        for t in 1:size(rule.target_out)[2]
             if all(rule.target_out[p, t, :] .≈ 0.0)
                 continue
             else
@@ -444,7 +457,7 @@ end
 
 
 """
-    compute_enabled!(rule::R, nets::Vector{N}, with_control_marking::Bool, with_weight_check::Bool)
+    compute_enabled_rule!(rule::R, nets::Vector{N}, with_control_marking::Bool, with_weight_check::Bool)
 
 DOCSTRING
 
@@ -454,11 +467,13 @@ DOCSTRING
 - `with_control_marking`: DESCRIPTION
 - `with_weight_check`: DESCRIPTION
 """
-function compute_enabled!(rule::R; nets::Vector{N}=[], with_control_marking::Bool=false, with_weight_check::Bool=false)::Bool where {N<:AbstractSparseDiscreteNet,R<:AbstractSparseRule}
+function compute_enabled_rule!(rule::R; nets::Vector{N}=[], with_control_marking::Bool=false, with_weight_check::Bool=false) where {N<:AbstractSparseDiscreteNet,R<:AbstractSparseRule}
 
     control_marking_fulfilled::Bool = true
 
     pattern_found::Bool = true
+
+    #FIXME: this algorithm is wrong. Copy from the dense version
 
     # check pattern in network
     @inline @inbounds for key in nonzero_keys(rule.target_in)
@@ -516,12 +531,12 @@ function compute_enabled!(rule::R; nets::Vector{N}=[], with_control_marking::Boo
 
     end
 
-    return pattern_found && control_marking_fulfilled
+    rule.enabled = pattern_found && control_marking_fulfilled
 end
 
 
 """
-    compute_enabled!(rule::R; nets::Vector{N}, with_control_marking::Bool = false, with_weight_check::Bool = false)
+    compute_enabled_rule!(rule::R; nets::Vector{N}, with_control_marking::Bool = false, with_weight_check::Bool = false)
 
 DOCSTRING
 
@@ -532,7 +547,7 @@ DOCSTRING
 - `with_control_marking`: DESCRIPTION
 - `with_weight_check`: DESCRIPTION
 """
-function compute_enabled!(rule::R; nets::Vector{N}=[], with_control_marking::Bool=false, with_weight_check::Bool=false)::Bool where {N<:AbstractDenseDiscreteNet,R<:AbstractDenseRule}
+function compute_enabled_rule!(rule::R; nets::Vector{N}=[], with_control_marking::Bool=false, with_weight_check::Bool=false) where {N<:AbstractDenseDiscreteNet,R<:AbstractDenseRule}
 
 
     control_marking_fulfilled::Bool = true
@@ -544,48 +559,69 @@ function compute_enabled!(rule::R; nets::Vector{N}=[], with_control_marking::Boo
 
         pattern_found_single::Bool = true
 
+        if rule.target_in[key] ≈ 0.
+            continue 
+        end
+
         @inline @inbounds for net in nets
+
             if with_weight_check
 
-                pattern_found_single = pattern_found_single && ( net.input[key] ≈ 0. == false) && (net.input[key] ≈ rule.target_in[key])
-            else
+                pattern_found_single = pattern_found_single  && (net.input[key] ≈ rule.target_in[key])
 
-                pattern_found_single = pattern_found_single && (net.input[key] ≈ 0. == false)
+            else
+                pattern_found_single = pattern_found_single && ((net.input[key] ≈ 0.0) == false)
             end
         end
 
         pattern_found = pattern_found && pattern_found_single
+
+        if pattern_found == false
+            break
+        end
+
     end
 
     @inline @inbounds for key in eachindex(rule.target_out)
 
         pattern_found_single::Bool = true
 
+        if rule.target_out[key] ≈ 0.
+            continue 
+        end
+
         @inline @inbounds for net in nets
 
             if with_weight_check
 
-                pattern_found_single = pattern_found_single && (net.output[key] ≈ 0. == false) && (net.output[key] ≈ rule.target_out[key])
+                pattern_found_single = pattern_found_single && (net.output[key] ≈ rule.target_out[key])
 
             else
 
-                pattern_found_single = pattern_found_single && (net.output[key] ≈ 0. == false)
+                pattern_found_single = pattern_found_single && (net.output[key] ≈ 0.0 == false)
             end
         end
 
         pattern_found = pattern_found && pattern_found_single
 
+        if pattern_found == false
+            break
+        end
     end
     # check control marking
     if with_control_marking
 
         @inline @inbounds for key in eachindex(rule.control_marking)
 
+            if rule.control_marking[key] ≈ 0. 
+                continue 
+            end 
+
             found_marking_single::Bool = true
 
             @inline @inbounds for net in nets
 
-                found_marking_single = found_marking_single && (net.marking[key] ≈ 0. == false) && (net.marking[key] ≈ rule.control_marking[key])
+                found_marking_single = found_marking_single && (net.marking[key] ≈ rule.control_marking[key])
 
             end
 
@@ -594,7 +630,7 @@ function compute_enabled!(rule::R; nets::Vector{N}=[], with_control_marking::Boo
 
     end
 
-    return pattern_found && control_marking_fulfilled
+    rule.enabled = pattern_found && control_marking_fulfilled
 
 end
 
@@ -610,12 +646,12 @@ DOCSTRING
 """
 function rewrite!(rule::R, net::N; nets::Vector{N}=[], with_control_marking::Bool=false, with_weight_check::Bool=false)::Tuple{Int64,Int64} where {N<:AbstractSparseDiscreteNet,R<:AbstractSparseRule}
 
-    if rule.p_size < net.p_size || rule.t_size < net.t_size || rule.r_size < net.r_size 
+    if rule.p_size < net.p_size || rule.t_size < net.t_size || rule.r_size < net.r_size
         # rebuild net
         rebuild_net!(rule, net)
     end
 
-    compute_enabled!(rule; nets=nets, with_control_marking=with_control_marking, with_weight_check=with_weight_check)
+    compute_enabled_rule!(rule; nets=nets, with_control_marking=with_control_marking, with_weight_check=with_weight_check)
 
     rule.replaced_places = Set()
     rule.old_marking = SparseArray{Float64,2}()
@@ -692,7 +728,6 @@ function rewrite!(rule::R, net::N; nets::Vector{N}=[], with_control_marking::Boo
         # redistribute marking
         rule.marking_redistribution(net)
     end
-
 end
 
 
@@ -709,49 +744,63 @@ DOCSTRING
 - `with_control_marking`: DESCRIPTION
 - `with_weight_check`: DESCRIPTION
 """
-function rewrite!(rule::R, net::N; nets::Vector{N}=[], with_control_marking::Bool=false, with_weight_check::Bool=false)::Tuple{Int64,Int64} where {N<:AbstractDenseDiscreteNet,R<:AbstractDenseRule}
+function rewrite!(rule::R, net::N; nets::Vector{N}=[], with_control_marking::Bool=false, with_weight_check::Bool=false) where {N<:AbstractDenseDiscreteNet,R<:AbstractDenseRule}
 
-    compute_enabled!(rule; nets=nets, with_control_marking=with_control_marking, with_weight_check=with_weight_check)
+    # rebuild net
+    if rule.p_size > size(net.input)[1] || rule.t_size > size(net.input)[2] || rule.r_size > size(net.input)[3]
+        # rebuild net
+        rebuild_net!(rule, net)
+    end
+
+    compute_enabled_rule!(rule; nets=nets, with_control_marking=with_control_marking, with_weight_check=with_weight_check)
 
     rule.replaced_places = Set()
-    rule.old_marking = Array{Float64,2}()
+
+    rule.old_marking = zeros(Float64, rule.p_size, rule.r_size)
 
     if rule.enabled
 
-        rule.old_marking = net.marking
+        rule.old_marking[1:size(net.marking)[1], 1:size(net.marking)[2]] = net.marking
 
-        # replace the nodes in the system 
-
-        ## delete the old elements of the network 
         has_effect::Bool = false
 
-        @inbounds @inline for key in eachindex(rule.target_in)
+        ## delete the old elements of the network 
+        @inbounds @inline for key in CartesianIndices(rule.target_in)
 
-            if net.input[key] ≈ 0. == false
+            if (net.input[key] ≈ 0.0) == false && (rule.target_in[key] ≈ 0. ) == false
 
-                if net.input[key] - rule.target_in[key] > 0.0 || net.input[key] - rule.target_in[key] ≈ 0.0 || net.input[key] ≈ -1.0
-                    net.input[key] = 0.0 
+                if net.input[key] - rule.target_in[key] < 0.0 || net.input[key] - rule.target_in[key] ≈ 0.0 || net.input[key] ≈ -1.0
+                    net.input[key] = 0.0
                 else
                     net.input[key] -= rule.target_in[key]
                 end
+                
+                @assert (net.input[key] > 0.) || (net.input[key] ≈ 0.) || (net.input[key] ≈ -1.)
 
                 push!(rule.replaced_places, key[1])
 
                 has_effect = true
+
             end
 
         end
 
-        @inbounds @inline for key in eachindex(rule.target_out)
+        @inbounds @inline for key in CartesianIndices(rule.target_out)
+    
+            if (net.output[key] ≈ 0.0) == false && (rule.target_out[key] ≈ 0. ) == false
 
-            if net.output[key] ≈ 0. == false
+                if net.output[key] - rule.target_out[key] < 0.0 || net.output[key] - rule.target_out[key] ≈ 0.0
+                    
+                    net.output[key] = 0.
 
-                if net.output[key] - rule.target_out[key] > 0.0 || net.output[key] - rule.target_out[key] ≈ 0.0
-                    net.output[key] = 0.0 
                 else
+
                     net.output[key] -= rule.target_out[key]
+
                 end
 
+                @assert (net.output[key] > 0.) || (net.output[key] ≈ 0.)
+
                 push!(rule.replaced_places, key[1])
 
                 has_effect = true
@@ -759,14 +808,12 @@ function rewrite!(rule::R, net::N; nets::Vector{N}=[], with_control_marking::Boo
             end
 
         end
+
 
         ## if something has changed, then add the new stuff
         if has_effect
 
-            # rebuild net
-            rebuild_net!(rule, net)
-
-            @inbounds @inline for key in eachindex(rule.effect_in)
+            @inbounds @inline for key in CartesianIndices(rule.effect_in)
 
                 if rule.effect_in[key] ≈ -1.0
                     net.input[key] = rule.effect_in[key]
@@ -774,22 +821,25 @@ function rewrite!(rule::R, net::N; nets::Vector{N}=[], with_control_marking::Boo
                     net.input[key] += rule.effect_in[key]
                 end
 
-                push!(rule.replaced_places, key[1])
+                @assert (net.input[key] > 0.) || (net.input[key] ≈ 0.) || (net.input[key] ≈ -1.)
 
             end
 
-            @inbounds @inline for key in eachindex(rule.effect_out)
+            @inbounds @inline for key in CartesianIndices(rule.effect_out)
 
                 net.output[key] += rule.effect_out[key]
 
-                push!(rule.replaced_places, key[1])
-
+                @assert (net.output[key] > 0.) || (net.output[key] ≈ 0.)
             end
 
+
+            @inbounds @inline for i in eachindex(rule.effect_marking)
+                net.marking[i] += rule.effect_marking[i]
+            end
         end
 
         # redistribute marking
-        rule.marking_redistribution(net)
+        rule.marking_redistribution(rule, net)
     end
 
 end
@@ -804,24 +854,36 @@ DOCSTRING
 - `net`: DESCRIPTION
 - `rule`: DESCRIPTION
 """
-function redistribute_marking_conserved(net::N, rule::R) where {N<:AbstractNet,R<:AbstractRule}
+function redistribute_marking_conserved!(rule::R, net::N) where {N<:AbstractNet,R<:AbstractRule}
 
-    @inline @inbounds for (old_key, new_keys) in rule.replaced_places
+    @inline @inbounds for p in rule.replaced_places
 
-        n = rule.old_marking[old_key]
+        @inline @inbounds for new_key in rule.transfer_relation_places[p]
 
-        @inline @inbounds for new_key in new_keys
 
-            if n > 1.0
-                net.marking[new_key] += 1.0
-                n -= 1.0
-            elseif n < 1.0
-                net.marking[new_key] += n
-                n = 0.0
-            elseif n ≈ 0.0
-                break
-            else
-                throw(ErrorException("Error, something wrong with conserved marking redistribution for old_index $old_key -> $new_keys at $new_key: n = $n, net.marking[$new_key] = $(net.marking[new_key])"))
+            n = rule.old_marking[p, :]
+
+            @inline @inbounds for r in 1:size(rule.old_marking)[2]
+
+                if n[r] > 1.0
+
+                    net.marking[new_key, r] += 1.0
+                    n[r] -= 1.0
+
+                elseif n[r] < 1.0
+
+                    net.marking[new_key, r] += n[r]
+                    n[r] = 0.0
+
+                elseif n[r] ≈ 0.0
+
+                    break
+
+                else
+
+                    throw(ErrorException("Error, something wrong with conserved marking redistribution for old_index $old_key -> $new_keys at $new_key: n[r] = $n[r], net.marking[$new_key] = $(net.marking[new_key])"))
+                
+                end
             end
         end
     end
@@ -837,13 +899,20 @@ DOCSTRING
 - `net`: DESCRIPTION
 - `rule`: DESCRIPTION
 """
-function redistribute_marking_copy(net::N, rule::R) where {N<:AbstractNet,R<:AbstractRule}
+function redistribute_marking_copy!(rule::R, net::N) where {N<:AbstractNet,R<:AbstractRule}
 
-    for (old_key, new_keys) in rule.replaced_places
+    @inline @inbounds for p in rule.replaced_places
 
-        for new_key in new_keys
-            net.marking[new_key] = rule.old_marking[old_key]
+        @inline @inbounds for new_key in rule.transfer_relation_places[p]
+            net.marking[new_key] = rule.old_marking[p]
         end
-
     end
+end
+
+
+@autodoc
+function reset!(rule::R) where {R <: AbstractRule}
+    rule.enabled = false 
+    rule.old_marking = zeros(Float64, size(rule.old_marking)...)
+    rule.replaced_places = Set{Int64}()
 end
