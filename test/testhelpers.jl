@@ -393,7 +393,7 @@ end
 
 DOCSTRING
 """
-function make_ruletest_data(t::Type{T}) where {T <: AbstractArray}
+function make_ruletest_data(t::Type{T}) where {T<:AbstractArray}
     code = [
         NRS.Token(
             NRS.P,
@@ -497,14 +497,14 @@ function make_ruletest_data(t::Type{T}) where {T <: AbstractArray}
     rule_effect_marking::T = zeros(Float64, 15, 4)
     rule_effect_marking[Int64(out_tray), :] = [0.0, 0, 2, 0,]
     rule_effect_marking[Int64(paper), :] = [0, 5.0, 0, 0,]
-    rule_effect_marking[ Int64(error_stack), :] = [0.0, 0, 0, 1]
+    rule_effect_marking[Int64(error_stack), :] = [0.0, 0, 0, 1]
 
 
     control_marking::T = zeros(Float64, 15, 4)
     control_marking[1, :] = [5, 0, 0, 0]
 
     transfer_relation_places = Dict(
-        Int64(out_tray) =>Set([Int64(out_tray),
+        Int64(out_tray) => Set([Int64(out_tray),
             Int64(paper),
             Int64(error_stack)])
     )
@@ -512,6 +512,13 @@ function make_ruletest_data(t::Type{T}) where {T <: AbstractArray}
     transfer_relation_transitions = Dict(
         Int64(print_out) => Set([Int64(print_out), Int64(throw_error)])
     )
+
+
+    net_input_after_rewrite::T = zeros(Float64, 15, 15, 4)
+
+    net_output_after_rewrite::T = zeros(Float64, 15, 15, 4)
+
+    net_marking_after_rewrite::T = zeros(Float64, 15, 4)
 
     return (code=code,
         net_input=net_input,
@@ -521,9 +528,12 @@ function make_ruletest_data(t::Type{T}) where {T <: AbstractArray}
         rule_target_out=rule_target_out,
         rule_effect_in=rule_effect_in,
         rule_effect_out=rule_effect_out,
-        rule_effect_marking = rule_effect_marking,
+        rule_effect_marking=rule_effect_marking,
         control_marking=control_marking,
         transfer_relation_places=transfer_relation_places,
-        transfer_relation_transitions=transfer_relation_transitions
+        transfer_relation_transitions=transfer_relation_transitions,
+        net_input_after_rewrite,
+        net_output_after_rewrite,
+        net_marking_after_rewrite,
     )
 end

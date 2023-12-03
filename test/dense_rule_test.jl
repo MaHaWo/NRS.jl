@@ -63,7 +63,14 @@ end
 
     NRS.rewrite!(rule, net, nets = [net,], with_control_marking = true, with_weight_check = true)
 
-    # TODO: add actual tests
+    @test size(net.input) == (15, 15, 4)
+    @test size(net.output) == (15, 15, 4)
+    @test size(net.marking) == (15, 4)
+    
+    @test net.input ≈ data.net_input_after_rewrite
+    @test net.output ≈ data.net_output_after_rewrite
+    @test net.marking ≈ data.net_marking_after_rewrite
+
 end 
 
 
