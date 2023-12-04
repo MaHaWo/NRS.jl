@@ -17,8 +17,6 @@ DOCSTRING
 - `input_interface_transitions::Array{Bool, 2}`: DESCRIPTION
 - `output_interface_places::Array{Bool, 2}`: DESCRIPTION
 - `output_interface_transitions::Array{Bool, 2}`: DESCRIPTION
-- `functions::Array{Function, 1}`: DESCRIPTION
-- `enabled_function::Function`: DESCRIPTION
 """
 mutable struct BasicDenseNet <: AbstractBasicDenseDiscreteNet
     input::Array{Float64,3}
@@ -97,15 +95,15 @@ function build_from_code!(code::Vector{S}, in::Array{Float64,3}, out::Array{Floa
     @inline @inbounds for symbol in code
         if symbol.k == P
 
-            in[symbol.p, symbol.t, :] += symbol.w
+            in[symbol.p, symbol.t, 1:length(symbol.w)] += symbol.w
 
         elseif symbol.k == T
 
-            out[symbol.p, symbol.t, :] += symbol.w
+            out[symbol.p, symbol.t, 1:length(symbol.w)] += symbol.w
 
         elseif symbol.k == I
 
-            in[symbol.p, symbol.t, :] = fill(-1, size(in)[3])
+            in[symbol.p, symbol.t, 1:length(symbol.w)] = fill(-1, length(symbol.w))
 
         else
 
@@ -113,7 +111,7 @@ function build_from_code!(code::Vector{S}, in::Array{Float64,3}, out::Array{Floa
 
         end
 
-        mark[symbol.p, :] += symbol.m
+        mark[symbol.p, 1:length(symbol.m)] += symbol.m
 
     end
 end

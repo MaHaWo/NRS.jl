@@ -18,7 +18,9 @@ function detect_conflict_vector(net::N) where {N<:AbstractDenseDiscreteNet}
     @inline @inbounds for p in 1:size(net.marking)[1]
         # conflict found when the sum of the weights going out from a place to enabled transitions is greater than its marking, such that they cannot all be served at once 
         if any((@tensor x[r] := view(net.input, p, :, :)[t, r] * net.enabled[t]) .> net.marking[p, :])
+
             conflict[p] = true
+
         end
     end
 

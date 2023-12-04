@@ -110,7 +110,7 @@ function build_rule_from_code!(
 
             if isempty(token.c) == false
                 # control marking 
-                control_marking[token.p, :] += token.c
+                control_marking[token.p, 1:length(token.c)] += token.c
             end
 
 
@@ -119,9 +119,9 @@ function build_rule_from_code!(
 
                 # target 
                 if token.k == P
-                    target_in[token.p, token.t, :] += token.w
+                    target_in[token.p, token.t, 1:length(token.w)] .+= token.w
                 elseif token.k == T
-                    target_out[token.p, token.t, :] += token.w
+                    target_out[token.p, token.t, 1:length(token.w)] .+= token.w
                 elseif token.k == I
                     target_in = fill(-1.0, size(target.in)[3])
                 end
@@ -155,18 +155,18 @@ function build_rule_from_code!(
 
                     # network matrices 
                     if ruletoken.k == P
-                        effect_in[ruletoken.p, ruletoken.t, :] .+= ruletoken.w
+                        effect_in[ruletoken.p, ruletoken.t, 1:length(ruletoken.w)] .+= ruletoken.w
 
                     elseif ruletoken.k == T
-                        effect_out[ruletoken.p, ruletoken.t, :] .+= ruletoken.w
+                        effect_out[ruletoken.p, ruletoken.t, 1:length(ruletoken.w)] .+= ruletoken.w
 
                     elseif ruletoken.k == I
-                        effect_in[ruletoken.p, ruletoken.t, :] = ruletoken.w
+                        effect_in[ruletoken.p, ruletoken.t, 1:length(ruletoken.w)] = ruletoken.w
                     end
 
                     # marking vector
                     if any(ruletoken.m .≈ 0.0)
-                        effect_marking[ruletoken.p, :] .+= ruletoken.m
+                        effect_marking[ruletoken.p, 1:length(ruletoken.w)] .+= ruletoken.m
                     end
                 end
             end
@@ -350,15 +350,15 @@ function rebuild_net!(rule::R, net::N) where {N<:AbstractNet,R<:AbstractRule}
 
         s = size(net.input)
 
-        input::TensorType = zeros(rule.p_size, rule.t_size, rule.r_size)
+        input::TensorType = zeros(Float64, rule.p_size, rule.t_size, rule.r_size)
         input[1:s[1], 1:s[2], 1:s[3]] .= net.input
         net.input = input
 
-        out::TensorType = zeros(rule.p_size, rule.t_size, rule.r_size)
+        out::TensorType = zeros(Float64, rule.p_size, rule.t_size, rule.r_size)
         out[1:s[1], 1:s[2], 1:s[3]] .= net.output
         net.output = out
 
-        mark::MarkingType = zeros(rule.p_size, rule.r_size)
+        mark::MarkingType = zeros(Float64, rule.p_size, rule.r_size)
         mark[1:s[1], 1:s[3]] .= net.marking
         net.marking = mark
 
@@ -371,6 +371,7 @@ function rebuild_net!(rule::R, net::N) where {N<:AbstractNet,R<:AbstractRule}
         net.output_interface_places::BVecType = zeros(Bool, rule.p_size,)
         net.input_interface_transitions::BVecType = zeros(Bool, rule.t_size,)
         net.output_interface_transitions::BVecType = zeros(Bool, rule.t_size,)
+        net.tmp_marking = zeros(Float64, rule.p_size, rule.r_size)
 
         compute_input_interface_places!(net)
         compute_input_interface_transitions!(net)
@@ -858,30 +859,34 @@ function redistribute_marking_conserved!(rule::R, net::N) where {N<:AbstractNet,
 
     @inline @inbounds for p in rule.replaced_places
 
-        @inline @inbounds for new_key in rule.transfer_relation_places[p]
+        # remove marking from places in preparation for redistribution 
 
+        net.marking[p,:] -= rule.old_marking[p, :]
 
-            n = rule.old_marking[p, :]
+        # add it onto new places 
+        @inline @inbounds for r in 1:size(rule.old_marking)[2]
+            
+            @inline @inbounds for new_key in rule.transfer_relation_places[p]
 
-            @inline @inbounds for r in 1:size(rule.old_marking)[2]
-
-                if n[r] > 1.0
+                if rule.old_marking[p, r] > 1.0
 
                     net.marking[new_key, r] += 1.0
-                    n[r] -= 1.0
 
-                elseif n[r] < 1.0
+                    rule.old_marking[p, r] -= 1.0
 
-                    net.marking[new_key, r] += n[r]
-                    n[r] = 0.0
+                elseif ( rule.old_marking[p, r] < 1.0 || rule.old_marking[p, r] ≈ 1.0) &&  rule.old_marking[p, r] > 0.0
 
-                elseif n[r] ≈ 0.0
+                    net.marking[new_key, r] +=  rule.old_marking[p, r]
+
+                    rule.old_marking[p, r] = 0.0
+
+                elseif rule.old_marking[p, r] ≈ 0.0
 
                     break
 
                 else
 
-                    throw(ErrorException("Error, something wrong with conserved marking redistribution for old_index $old_key -> $new_keys at $new_key: n[r] = $n[r], net.marking[$new_key] = $(net.marking[new_key])"))
+                    throw(ErrorException("Error, something wrong with conserved marking redistribution for old_index $p -> $(rule.transfer_relation_places[p]) at $new_key: n[r] = $(rule.old_marking[p, r]), net.marking[$new_key] = $(net.marking[new_key])"))
                 
                 end
             end
@@ -902,15 +907,21 @@ DOCSTRING
 function redistribute_marking_copy!(rule::R, net::N) where {N<:AbstractNet,R<:AbstractRule}
 
     @inline @inbounds for p in rule.replaced_places
-
         @inline @inbounds for new_key in rule.transfer_relation_places[p]
-            net.marking[new_key] = rule.old_marking[p]
+            net.marking[new_key, :] = rule.old_marking[p, :]
         end
     end
 end
 
 
-@autodoc
+"""
+    reset!(rule::R)
+
+DOCSTRING
+
+# Arguments:
+- `rule`: DESCRIPTION
+"""
 function reset!(rule::R) where {R <: AbstractRule}
     rule.enabled = false 
     rule.old_marking = zeros(Float64, size(rule.old_marking)...)
