@@ -10,4 +10,6 @@ include("./testhelpers.jl")
 include("./encoding_test.jl")
 include("./dense_net_test.jl")
 include("./sparse_net_test.jl")
+include("./dense_rule_test.jl")
+include("./sparse_rule_test.jl")
 

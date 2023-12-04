@@ -160,7 +160,6 @@ end
 
     NRS.run!(fixture.net, 10, 2e-15)
 
-    @show fixture.net.marking
     @test fixture.net.tmp_marking ≈ SparseArray(zeros(Float64, 7, 4))
     @test fixture.net.marking ≈ tmp_marking
 end

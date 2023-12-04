@@ -10,7 +10,7 @@ using SparseArrayKit
     data = make_ruletest_data(SparseArray)
 
     net = NRS.BasicSparseNet(15, 15, 4, data.code)
-    rule = NRS.SparseRule(1, 15, 15, 4, NRS.redistribute_marking_conserved, data.code)
+    rule = NRS.SparseRule(1, 15, 15, 4, NRS.redistribute_marking_conserved!, data.code)
 
     @test net.input ≈ data.net_input
     @test net.output ≈ data.net_output
