@@ -1,10 +1,4 @@
 
-include("../src/NRS.jl")
-
-include("./testhelpers.jl")
-
-using Test
-using SparseArrayKit
 
 @testset "sparse_rule_construction_test" begin
     data = make_ruletest_data(SparseArray)
