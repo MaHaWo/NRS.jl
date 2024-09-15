@@ -1,0 +1,50 @@
+name: unit-tests
+
+on:
+  # We run CI on pushes to the main branch
+  push:
+    branches:
+      - main
+  # and on all pull requests to the main branch
+  pull_request:
+    branches:
+      - main
+  # as well as upon manual triggers through the 'Actions' tab of the Github UI
+  workflow_dispatch:
+
+# needed to allow julia-actions/cache to delete old caches that it has created
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+    build-and-test:
+        name: Run julia tests on ${{matrix.os}}
+        runs-on: ${{matrix.os}}
+        strategy:
+            matrix:
+                os: [ubuntu-latest, macos-latest, windows-latest]
+                julia-version: ['1.10.4']
+        steps:
+        - name: Checkout repository
+          uses: actions/checkout@v4
+
+        - name: Setup julia
+          uses: julia-actions/setup-julia@v2
+          with:
+            version: ${{ matrix.julia-version }}
+
+        - name: Run tests
+          uses: julia-actions/julia-runtest@v1
+          with:
+            annotate: true
+
+        - name: Process coverage
+          uses: julia-actions/julia-processcoverage@v1
+          if: ${{ matrix.os == 'ubuntu-latest'}}
+
+        - name: Upload to codecov
+          uses: codecov/codecov-action@v4
+          if: ${{ matrix.os == 'ubuntu-latest'}}
+          env:
+            CODECOV_TOKEN: ${{ secrets.CODECOV_ORG_TOKEN }}
