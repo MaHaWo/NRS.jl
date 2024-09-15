@@ -23,7 +23,7 @@ jobs:
         runs-on: ${{matrix.os}}
         strategy:
             matrix:
-                os: [ubuntu-latest]
+                os: [ubuntu-latest, macos-latest, windows-latest]
                 julia-version: ['1.10.4', 'lts']
         steps:
         - name: Checkout repository
