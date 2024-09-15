@@ -24,7 +24,7 @@ jobs:
         strategy:
             matrix:
                 os: [ubuntu-latest, macos-latest, windows-latest]
-                julia-version: ['1.10.4', 'lts']
+                julia-version: ['1.10.4']
         steps:
         - name: Checkout repository
           uses: actions/checkout@v4
@@ -33,10 +33,19 @@ jobs:
           uses: julia-actions/setup-julia@v2
           with:
             version: ${{ matrix.julia-version }}
-        - uses: julia-actions/julia-runtest@v1
+
+        - name: Run tests
+          uses: julia-actions/julia-runtest@v1
           with:
             annotate: true
-        - uses: julia-actions/julia-processcoverage@v1
-        - uses: codecov/codecov-action@v4
+
+        - name: Process coverage
+          uses: julia-actions/julia-processcoverage@v1
+
+        - name: add cache for artifacts
+          uses: julia-actions/cache@v2
+
+        - name: Upload to codecov
+          uses: codecov/codecov-action@v4
           env:
             CODECOV_TOKEN: ${{ secrets.CODECOV_ORG_TOKEN }}
