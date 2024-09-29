@@ -3,9 +3,6 @@ module NRS
 using TensorOperations
 using SparseArrayKit
 using LinearAlgebra
-using AutomaticDocstrings # not necessary for the running of the module
-AutomaticDocstrings.options[:min_args] = 1
-AutomaticDocstrings.options[:kwargs_header] = "# Keyword arguments:"
 
 # auxilliary stuff
 include("../src/types.jl")
@@ -28,15 +25,15 @@ include("../src/rewriting_system.jl")
 ## Utilities
 
 ########################################################################################################################
-## encoding 
+## encoding
 export AbstractToken, AbstractEnergyToken, AbstractRuleToken
 export BasicToken, Token, BasicEnergyToken, EnergyToken, to_basic, P, T, I
 
 ########################################################################################################################
-## network 
+## network
 
 ########################################################################################################################
-## symmetries 
+## symmetries
 export AbstractSymmetry
 export EnergyLookup, compute_energy!
 
