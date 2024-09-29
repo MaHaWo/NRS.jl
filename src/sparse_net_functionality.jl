@@ -14,7 +14,7 @@ function detect_conflict_vector(net::N)::BitVector where {N<:AbstractSparseDiscr
     conflict::BitVector = fill(false, size(net.marking)[1])
 
     @inline @inbounds for p in 1:size(net.marking)[1]
-        # conflict found when the sum of the weights going out from a place to enabled transitions is greater than its marking, such that they cannot all be served at once 
+        # conflict found when the sum of the weights going out from a place to enabled transitions is greater than its marking, such that they cannot all be served at once
 
         if any((@tensor x[r] := net.input[p, :, :][t, r] * net.enabled[t]) .> net.marking[p, :])
             conflict[p] = true
@@ -39,7 +39,7 @@ function detect_conflict(net::N)::Bool where {N<:AbstractSparseDiscreteNet}
 
     @inline @inbounds for p in 1:size(net.marking)[1]
 
-        # conflict found when the sum of the weights going out from a place to enabled transitions is greater than its marking, such that they cannot all be served at once 
+        # conflict found when the sum of the weights going out from a place to enabled transitions is greater than its marking, such that they cannot all be served at once
         if any((@tensor x[r] := net.input[p, :, :][t, r] * net.enabled[t]) .> net.marking[p, :])
             conflict = true
 
@@ -75,10 +75,10 @@ function handle_conflict!(net::N) where {N<:AbstractSparseDiscreteNet}
             end
 
             # the way it's implemented in cpp:
-            # for e in net.enabled 
+            # for e in net.enabled
             #     if e && rand(Float64) < 0.5
-            #         e = false 
-            #         disabled = true 
+            #         e = false
+            #         disabled = true
             #     end
             # end
         end
@@ -87,7 +87,7 @@ function handle_conflict!(net::N) where {N<:AbstractSparseDiscreteNet}
 end
 
 ################################################################################
-## computation of enabled transitions for different types of nets 
+## computation of enabled transitions for different types of nets
 
 
 """
@@ -100,14 +100,14 @@ DOCSTRING
 """
 function compute_enabled!(net::N) where {N<:AbstractBasicSparseDiscreteNet}
 
-    SparseArrayKit.zerovector!(net.enabled)
+    SparseArrayKit._zero!(net.enabled)
 
     @inline @inbounds for t in 1:size(net.input)[2]
 
         #declare temps and reset enabled value
         e::Bool = true
 
-        # whether we have inhibitor arcs 
+        # whether we have inhibitor arcs
         @inline @inbounds for p in 1:size(net.input)[1]
 
             if all(net.input[p, t, :] .≈ 0.0)
@@ -142,7 +142,7 @@ DOCSTRING
 """
 function compute_enabled!(net::N) where {N<:AbstractEnergySparseDiscreteNet}
 
-    SparseArrayKit.zerovector!(net.enabled)
+    SparseArrayKit._zero!(net.enabled)
 
     @inline @inbounds for t in 1:size(net.input)[2]
 
@@ -178,7 +178,7 @@ function compute_enabled!(net::N) where {N<:AbstractEnergySparseDiscreteNet}
 end
 
 ################################################################################
-## steps and runs of nets 
+## steps and runs of nets
 
 """
     compute_step!(net::N)
@@ -202,7 +202,7 @@ function compute_step!(net::N) where {N<:AbstractSparseDiscreteNet}
 
         net.marking = deepcopy(net.tmp_marking)
 
-        SparseArrayKit.zerovector!(net.tmp_marking)
+        SparseArrayKit._zero!(net.tmp_marking)
 
     elseif hasfield(typeof(net), :basenet)
         @tensor begin

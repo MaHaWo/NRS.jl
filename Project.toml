@@ -4,10 +4,14 @@ authors = ["Harald Mack <harald.mack@protonmail.com>"]
 version = "0.1.0"
 
 [deps]
-AutomaticDocstrings = "70b36510-7dee-11e9-28d4-77afe9445f67"
-Coverage = "a2441757-f6aa-5fb2-8edb-039e3f45d037"
-Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
-LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 SparseArrayKit = "a9a3c162-d163-4c15-8926-b8794fbefed2"
 TensorOperations = "6aa20fa7-93e2-5fca-9bc0-fbd0db3c71a2"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+
+[extras]
+Coverage = "a2441757-f6aa-5fb2-8edb-039e3f45d037"
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test", "Coverage"]
