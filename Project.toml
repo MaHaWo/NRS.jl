@@ -4,14 +4,15 @@ authors = ["Harald Mack <harald.mack@protonmail.com>"]
 version = "0.1.0"
 
 [deps]
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 SparseArrayKit = "a9a3c162-d163-4c15-8926-b8794fbefed2"
 TensorOperations = "6aa20fa7-93e2-5fca-9bc0-fbd0db3c71a2"
-LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+
+[compat]
+Random = "1.11.0"
 
 [extras]
 Coverage = "a2441757-f6aa-5fb2-8edb-039e3f45d037"
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
-
-[targets]
-test = ["Test", "Coverage"]
