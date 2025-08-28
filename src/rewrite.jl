@@ -5,13 +5,13 @@ struct Rule{T<:AbstractArray,M<:AbstractArray} <: AbstractRule
     markings::M
 end
 
-struct NRS{T<:AbstractArray,M<:AbstractArray} <: AbstractNRS
+struct NetRewritingSystem{T<:AbstractArray,M<:AbstractArray} <: AbstractNRS
     net::Net{T,M}
     rules::Rule{T,M}
     check_rule::Function
 end
 
-function rewrite!(nrs::NRS, rule::Rule)
+function rewrite!(nrs::NetRewritingSystem, rule::Rule)
     enabled = nrs.check_rule(nrs.net, rule)
     if enabled 
         # TODO: build rewriting 
