@@ -1,28 +1,22 @@
-struct AbstractNet end 
+struct AbstractNet end
 struct AbstractRule end
-struct AbstractEdgeList end 
 struct AbstractNRS end
 
-struct EdgeList{T <: AbstractArray} <: AbstractEdgeList
-    nodes::Vector{Int}
-    weights::T
-end
-
-struct Net{T <: AbstractArray, P <: AbstractArray} <: AbstractNet
+struct Net{T<:AbstractArray,M<:AbstractArray} <: AbstractNet
     inputs::T
     outputs::T
-    markings::P 
+    markings::M
     enabled::Vector{Bool}
 end
 
-struct Rule{T <: AbstractArray} <: AbstractRule
-    conditions::EdgeList{T}
-    actions::EdgeList{T}
+struct Rule{T<:AbstractArray,M<:AbstractArray} <: AbstractRule
+    conditions::T
+    actions::T
+    markings::M
 end
 
-struct NRS{T <: AbstractArray} <: AbstractNRS
-    net::Net{T}
-    rules::Rule{T}
+struct NRS{T<:AbstractArray,M<:AbstractArray} <: AbstractNRS
+    net::Net{T,M}
+    rules::Rule{T,M}
+    check_rules::Function
 end
-
-
